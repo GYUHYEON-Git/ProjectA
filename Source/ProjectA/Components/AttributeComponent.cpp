@@ -3,32 +3,64 @@
 
 #include "Components/AttributeComponent.h"
 
-// Sets default values for this component's properties
 UAttributeComponent::UAttributeComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	// ...
 }
 
 
-// Called when the game starts
 void UAttributeComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
 	
 }
 
 
-// Called every frame
 void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+}
+
+bool UAttributeComponent::CheckHasEnoughStamina(float StaminaCost) const {
+	return CurrentStamina >= StaminaCost;
+}
+
+void UAttributeComponent::DecreaseStamina(float StaminaCost) {
+	CurrentStamina = FMath::Clamp(CurrentStamina - StaminaCost, 0.f, MaxStamina);
+	BroadcastOnAttributeType(EAttributeType::Stamina);
+}
+
+void UAttributeComponent::ToggleStaminaRegeneration(bool bEnable, float StartDelay) {
+	if (bEnable) {
+		if (GetWorld()->GetTimerManager().IsTimerActive(StaminaRegenTimeHandler) == false) {
+			GetWorld()->GetTimerManager().SetTimer(StaminaRegenTimeHandler, this, &ThisClass::RegenrateStaminaHandler, 0.1f, true, StartDelay);
+		}
+	}
+	else {
+		GetWorld()->GetTimerManager().ClearTimer(StaminaRegenTimeHandler);
+	}
+}
+
+void UAttributeComponent::BroadcastOnAttributeType(EAttributeType AttributeType) {
+	float Ratio = 0.f;
+	switch (AttributeType) {
+	case EAttributeType::Stamina:
+		Ratio = GetStaminaRatio();
+		break;
+	case EAttributeType::Health:
+		break;
+	}
+	OnAttributeChanged.Broadcast(AttributeType, Ratio);
+}
+
+void UAttributeComponent::RegenrateStaminaHandler() {
+	CurrentStamina = FMath::Clamp(CurrentStamina + StaminaRegenRate, 0.f, MaxStamina);
+	BroadcastOnAttributeType(EAttributeType::Stamina);
+	if (CurrentStamina >= MaxStamina) {
+		ToggleStaminaRegeneration(false);
+	}
 }
 

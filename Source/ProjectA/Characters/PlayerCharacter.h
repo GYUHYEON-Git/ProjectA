@@ -11,6 +11,9 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class UAttributeComponent;
+class UStateComponent;
+class UPlayerHUDWidget;
 
 UCLASS()
 class PROJECTA_API APlayerCharacter : public ACharacter	
@@ -27,11 +30,42 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
+	// InputAction
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> MoveAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> LookAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> SprintRollingAction;
+
+protected:
+	// Montage
+	UPROPERTY(EditAnywhere, Category = "Montage")
+	TObjectPtr<UAnimMontage> RollingMontage;
+
+	// Components
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAttributeComponent> AttributeComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStateComponent> StateComponent;
+
+protected:
+	// UI
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UPlayerHUDWidget> PlayerHUDWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UPlayerHUDWidget> PlayerHUDWidget;
+
+protected:
+	UPROPERTY(VisibleAnywhere, Category = "Movement Data")
+	float NormalSpeed = 500.f;
+
+	UPROPERTY(VisibleAnywhere, Category = "Movement Data")
+	float SprintSpeed = 1000.f;
 
 public:
 	APlayerCharacter();
@@ -49,5 +83,16 @@ public:
 	void Move(const FInputActionValue& Values);
 
 	void Look(const FInputActionValue& Values);
+
+	FORCEINLINE UStateComponent* GetStateComponent() const { return StateComponent; }
+
+protected:
+	bool IsMoving() const;
+
+	void Sprinting();
+
+	void StopSprint();
+
+	void Rolling();
 
 };

@@ -8,10 +8,12 @@
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Components/AttributeComponent.h"
+#include "Components/StateComponent.h"
+#include "UI/PlayerHUDWidget.h"
+#include "MyGameplayTags.h"
 
-// Sets default values
-APlayerCharacter::APlayerCharacter()
-{
+APlayerCharacter::APlayerCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
 
 	bUseControllerRotationPitch = false;
@@ -20,6 +22,9 @@ APlayerCharacter::APlayerCharacter()
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 500.f, 0.f);
+
+	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("StringArm"));
 	SpringArm->SetupAttachment(RootComponent);
@@ -31,28 +36,36 @@ APlayerCharacter::APlayerCharacter()
 	Camera->SetupAttachment(SpringArm);
 	Camera->bUsePawnControlRotation = false;
 
+	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("Attribute"));
+	StateComponent = CreateDefaultSubobject<UStateComponent>(TEXT("State"));
 }
 
-void APlayerCharacter::BeginPlay()
-{
+void APlayerCharacter::BeginPlay() {
 	Super::BeginPlay();
-	
+	if (PlayerHUDWidgetClass) {
+		PlayerHUDWidget = CreateWidget<UPlayerHUDWidget>(GetWorld(), PlayerHUDWidgetClass);
+		if (PlayerHUDWidget) {
+			PlayerHUDWidget->AddToViewport();
+		}
+	}
+
 }
 
-void APlayerCharacter::Tick(float DeltaTime)
-{
+void APlayerCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
 }
 
-void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
+void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
-	}
 
+		EnhancedInputComponent->BindAction(SprintRollingAction, ETriggerEvent::Triggered, this, &ThisClass::Sprinting);
+		EnhancedInputComponent->BindAction(SprintRollingAction, ETriggerEvent::Completed, this, &ThisClass::StopSprint);
+		EnhancedInputComponent->BindAction(SprintRollingAction, ETriggerEvent::Canceled, this, &ThisClass::Rolling);
+	}
 }
 
 void APlayerCharacter::NotifyControllerChanged() {
@@ -65,6 +78,9 @@ void APlayerCharacter::NotifyControllerChanged() {
 }
 
 void APlayerCharacter::Move(const FInputActionValue& Values) {
+	check(StateComponent);
+	if (StateComponent->MovementInputEnabled() == false) return;
+
 	FVector2D MovementVector = Values.Get<FVector2D>();
 	if (Controller != nullptr) {
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -86,3 +102,47 @@ void APlayerCharacter::Look(const FInputActionValue& Values) {
 	}
 }
 
+bool APlayerCharacter::IsMoving() const {
+	if (UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement()) {
+		return CharacterMovementComponent->Velocity.Size2D() > 3.f && CharacterMovementComponent->GetCurrentAcceleration() != FVector::Zero();
+	}
+	return false;
+}
+
+void APlayerCharacter::Sprinting() {
+	if (AttributeComponent->GetBaseStamina() > 5.f && IsMoving()) {
+		AttributeComponent->ToggleStaminaRegeneration(false);
+		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+		AttributeComponent->DecreaseStamina(0.1f);
+	}
+	else {
+		StopSprint();
+	}
+}
+
+void APlayerCharacter::StopSprint() {
+	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+	AttributeComponent->ToggleStaminaRegeneration(true);
+}
+
+void APlayerCharacter::Rolling() {
+	check(AttributeComponent);
+	check(StateComponent);
+	if (StateComponent->GetCurrentState() == MyGameplayTags::Character_State_Rolling) return;
+
+	if (AttributeComponent->CheckHasEnoughStamina(15.f)) {
+		AttributeComponent->ToggleStaminaRegeneration(false);
+		StateComponent->ToggleMovementInput(false);
+		AttributeComponent->DecreaseStamina(15.f);
+
+		FVector InputVector = GetLastMovementInputVector();
+		FRotator TargetRotation;
+		if (InputVector.IsNearlyZero()) TargetRotation = GetActorRotation();
+		else TargetRotation = InputVector.Rotation();
+		SetActorRotation(TargetRotation);
+
+		PlayAnimMontage(RollingMontage);
+		StateComponent->SetState(MyGameplayTags::Character_State_Rolling);
+		AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
+	}
+}

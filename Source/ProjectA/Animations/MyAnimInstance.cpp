@@ -3,8 +3,10 @@
 
 #include "Animations/MyAnimInstance.h"
 
-#include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/Character.h"
+#include "Characters/PlayerCharacter.h"
+#include "Components/StateComponent.h"
 
 void UMyAnimInstance::NativeInitializeAnimation() {
 	Super::NativeInitializeAnimation();
@@ -22,4 +24,10 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds) {
 	Speed = Velocity.Size2D();
 	bShouldMove = Speed > 3.f && MovementComponent->GetCurrentAcceleration() != FVector::ZeroVector;
 	bIsFalling = MovementComponent->IsFalling();
+}
+
+void UMyAnimInstance::AnimNotify_ResetMovementInput() {
+	if (APlayerCharacter* LocalCharacter = Cast<APlayerCharacter>(GetOwningActor())) {
+		LocalCharacter->GetStateComponent()->ToggleMovementInput(true);
+	}
 }
