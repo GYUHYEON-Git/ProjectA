@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "PlayerCharacter.generated.h"
 
@@ -13,6 +14,7 @@ class UInputMappingContext;
 class UInputAction;
 class UAttributeComponent;
 class UStateComponent;
+class UCombatComponent;
 class UPlayerHUDWidget;
 
 UCLASS()
@@ -40,17 +42,33 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> SprintRollingAction;
 
-protected:
-	// Montage
-	UPROPERTY(EditAnywhere, Category = "Montage")
-	TObjectPtr<UAnimMontage> RollingMontage;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> InteractAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> ToggleCombatAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> AttackAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> HeavyAttackAction;
+
+private:
 	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAttributeComponent> AttributeComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStateComponent> StateComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UCombatComponent> CombatComponent;
+
+protected:
+	// Montage
+	UPROPERTY(EditAnywhere, Category = "Montage")
+	TObjectPtr<UAnimMontage> RollingMontage;
 
 protected:
 	// UI
@@ -66,6 +84,22 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "Movement Data")
 	float SprintSpeed = 1000.f;
+
+	UPROPERTY(VisibleAnywhere, Category = "Sprinting")
+	bool bSprinting = false;
+
+// Combo Section
+protected:
+	/* 콤보 시퀀스 진행중 */
+	bool bComboSequenceRunning = false;
+	/* 콤보 입력 가능? */
+	bool bCanComboInput = false;
+	/* 콤보 카운터 */
+	int32 ComboCounter = 0;
+	/* 콤보 입력 여부 */
+	bool bSavedComboInput = false;
+	/* 콤보 리셋 타이머 핸들 */
+	FTimerHandle ComboResetTimerHandle;
 
 public:
 	APlayerCharacter();
@@ -88,11 +122,39 @@ public:
 
 protected:
 	bool IsMoving() const;
+	bool CanToggleCombat() const;
+	FORCEINLINE bool IsSprinting() const { return bSprinting; }
 
 	void Sprinting();
 
 	void StopSprint();
 
 	void Rolling();
+
+	void Interact();
+
+	void ToggleCombat();
+
+	void AutoToggleCombat();
+	void Attack();
+	void SpecialAttack();
+	void HeavyAttack();
+
+protected:
+	FGameplayTag GetAttackPerform() const;
+
+	/* 공격 가능 조건 체크 */
+	bool CanPerformAttack(const FGameplayTag& AttackTypeTag) const;
+	/* 공격 실행 */
+	void DoAttack(const FGameplayTag& AttackTypeTag);
+	/* 콤보 실행 */
+	void ExecuteComboAttack(const FGameplayTag& AttackTypeTag);
+	/* 콤보 초기화 */
+	void ResetCombo();
+
+public:
+	void EnableComboWindow();
+	void DisableComboWindow();
+	void AttackFinished(const float ComboResetDelay);
 
 };

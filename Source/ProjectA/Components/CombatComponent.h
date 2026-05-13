@@ -1,0 +1,47 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "MyGameplayTags.h"
+#include "Components/ActorComponent.h"
+#include "CombatComponent.generated.h"
+
+class AWeapon;
+
+UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+class PROJECTA_API UCombatComponent : public UActorComponent
+{
+	GENERATED_BODY()
+
+protected:
+	UPROPERTY()
+	TObjectPtr<AWeapon> MainWeapon;
+
+	UPROPERTY(EditAnywhere)
+	bool bCombatEnabled = false;
+
+	UPROPERTY(VisibleAnywhere)
+	FGameplayTag LastAttackType;
+
+public:	
+	UCombatComponent();
+
+protected:
+	virtual void BeginPlay() override;
+
+public:	
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+public:
+	void SetWeapon(AWeapon* NewWeapon);
+
+	FORCEINLINE bool IsCombatEnabled() const { return bCombatEnabled; }
+	FORCEINLINE void SetCombatEnabled(const bool bEnabled) { bCombatEnabled = bEnabled; }
+
+	FORCEINLINE AWeapon* GetMainWeapon() const { return MainWeapon; }
+
+	FORCEINLINE FGameplayTag GetLastAttackType() const { return LastAttackType; }
+	FORCEINLINE void SetLastAttackType(const FGameplayTag& NewAttackTypeTag) { LastAttackType = NewAttackTypeTag; }
+		
+};

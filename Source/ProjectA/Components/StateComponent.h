@@ -7,7 +7,6 @@
 #include "Components/ActorComponent.h"
 #include "StateComponent.generated.h"
 
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTA_API UStateComponent : public UActorComponent
 {

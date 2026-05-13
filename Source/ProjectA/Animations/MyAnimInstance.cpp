@@ -31,3 +31,9 @@ void UMyAnimInstance::AnimNotify_ResetMovementInput() {
 		LocalCharacter->GetStateComponent()->ToggleMovementInput(true);
 	}
 }
+
+void UMyAnimInstance::AnimNotify_ResetState() {
+	if (const APlayerCharacter* LocalCharacter = Cast<APlayerCharacter>(GetOwningActor())) {
+		LocalCharacter->GetStateComponent()->ClearState();
+	}
+}

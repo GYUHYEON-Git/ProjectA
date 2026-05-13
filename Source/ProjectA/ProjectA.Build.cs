@@ -18,6 +18,7 @@ public class ProjectA : ModuleRules
 			"InputCore", 
 			"EnhancedInput",
             "GameplayTags",
+            "AnimGraphRuntime",
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

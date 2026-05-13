@@ -3,6 +3,7 @@
 
 #include "Characters/PlayerCharacter.h"
 
+#include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
@@ -10,8 +11,11 @@
 #include "EnhancedInputSubsystems.h"
 #include "Components/AttributeComponent.h"
 #include "Components/StateComponent.h"
+#include "Components/CombatComponent.h"
 #include "UI/PlayerHUDWidget.h"
 #include "MyGameplayTags.h"
+#include "Interfaces/Interact.h"
+#include "Equipments/Weapon.h"
 
 APlayerCharacter::APlayerCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -38,6 +42,7 @@ APlayerCharacter::APlayerCharacter() {
 
 	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("Attribute"));
 	StateComponent = CreateDefaultSubobject<UStateComponent>(TEXT("State"));
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
 }
 
 void APlayerCharacter::BeginPlay() {
@@ -65,6 +70,18 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(SprintRollingAction, ETriggerEvent::Triggered, this, &ThisClass::Sprinting);
 		EnhancedInputComponent->BindAction(SprintRollingAction, ETriggerEvent::Completed, this, &ThisClass::StopSprint);
 		EnhancedInputComponent->BindAction(SprintRollingAction, ETriggerEvent::Canceled, this, &ThisClass::Rolling);
+
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Interact);
+
+		EnhancedInputComponent->BindAction(ToggleCombatAction, ETriggerEvent::Started, this, &ThisClass::ToggleCombat);
+		// Combat 상태로 자동 전환
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ThisClass::AutoToggleCombat);
+		// 일반 공격
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Canceled, this, &ThisClass::Attack);
+		// 특수 공격
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ThisClass::SpecialAttack);
+		// HeavyAttack
+		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Started, this, &ThisClass::HeavyAttack);
 	}
 }
 
@@ -109,11 +126,21 @@ bool APlayerCharacter::IsMoving() const {
 	return false;
 }
 
+bool APlayerCharacter::CanToggleCombat() const {
+	check(StateComponent);
+	FGameplayTagContainer CheckTags;
+	CheckTags.AddTag(MyGameplayTags::Character_State_Attacking);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
+	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
+	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false;
+}
+
 void APlayerCharacter::Sprinting() {
 	if (AttributeComponent->GetBaseStamina() > 5.f && IsMoving()) {
 		AttributeComponent->ToggleStaminaRegeneration(false);
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
 		AttributeComponent->DecreaseStamina(0.1f);
+		bSprinting = true;
 	}
 	else {
 		StopSprint();
@@ -123,6 +150,7 @@ void APlayerCharacter::Sprinting() {
 void APlayerCharacter::StopSprint() {
 	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
 	AttributeComponent->ToggleStaminaRegeneration(true);
+	bSprinting = false;
 }
 
 void APlayerCharacter::Rolling() {
@@ -145,4 +173,194 @@ void APlayerCharacter::Rolling() {
 		StateComponent->SetState(MyGameplayTags::Character_State_Rolling);
 		AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
 	}
+}
+
+void APlayerCharacter::Interact() {
+	FHitResult OutHit;
+	const FVector Start = GetActorLocation();
+	const FVector End = Start;
+	constexpr float Radius = 100.f;
+
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(COLLISION_OBJECT_INTERACTION));
+
+	TArray<AActor*> ActorsToIgnore;
+
+	bool bHit = UKismetSystemLibrary::SphereTraceSingleForObjects(
+		this,
+		Start,
+		End,
+		Radius,
+		ObjectTypes,
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::ForDuration,
+		OutHit,
+		true);
+	if (bHit) {
+		if (AActor* HitActor = OutHit.GetActor()) {
+			if (IInteract* Interaction = Cast<IInteract>(HitActor)) {
+				Interaction->Interact(this);
+			}
+		}
+	}	
+}
+
+void APlayerCharacter::ToggleCombat() {
+	check(CombatComponent);
+	check(CombatComponent);
+	if (CombatComponent) {
+		if (const AWeapon* Weapon = CombatComponent->GetMainWeapon()) {
+			if (CanToggleCombat()) {
+				StateComponent->SetState(MyGameplayTags::Character_State_GeneralAction);
+				if (CombatComponent->IsCombatEnabled()) {
+					PlayAnimMontage(Weapon->GetMontageForTag(MyGameplayTags::Character_Action_Unequip));
+				}
+				else {
+					PlayAnimMontage(Weapon->GetMontageForTag(MyGameplayTags::Character_Action_Equip));
+				}
+			}
+		}
+	}
+}
+
+void APlayerCharacter::AutoToggleCombat() {
+	if (CombatComponent) {
+		if (!CombatComponent->IsCombatEnabled()) {
+			ToggleCombat();
+		}
+	}
+}
+
+void APlayerCharacter::Attack() {
+	const FGameplayTag AttackTypeTag = GetAttackPerform();
+	if (CanPerformAttack(AttackTypeTag)) {
+		ExecuteComboAttack(AttackTypeTag);
+	}
+}
+
+void APlayerCharacter::SpecialAttack() {
+	const FGameplayTag AttackTypeTag = MyGameplayTags::Character_Attack_Special;
+	if (CanPerformAttack(AttackTypeTag)) {
+		ExecuteComboAttack(AttackTypeTag);
+	}
+}
+
+void APlayerCharacter::HeavyAttack() {
+	AutoToggleCombat();
+	const FGameplayTag AttackTypeTag = MyGameplayTags::Character_Attack_Heavy;
+	if (CanPerformAttack(AttackTypeTag)) {
+		ExecuteComboAttack(AttackTypeTag);
+	}
+}
+
+FGameplayTag APlayerCharacter::GetAttackPerform() const {
+	if (IsSprinting()) {
+		return MyGameplayTags::Character_Attack_Running;
+	}
+	return MyGameplayTags::Character_Attack_Light;
+}
+
+bool APlayerCharacter::CanPerformAttack(const FGameplayTag& AttackWeaponTag) const {
+	check(StateComponent);
+	check(CombatComponent);
+	check(AttributeComponent);
+	if (IsValid(CombatComponent->GetMainWeapon()) == false) {
+		return false;
+	}
+
+	FGameplayTagContainer CheckTags;
+	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
+	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
+
+	const float StaminaCost = CombatComponent->GetMainWeapon()->GetStaminaCost(AttackWeaponTag);
+	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false
+		&& CombatComponent->IsCombatEnabled()
+		&& AttributeComponent->CheckHasEnoughStamina(StaminaCost);
+}
+
+void APlayerCharacter::DoAttack(const FGameplayTag& AttackTypeTag) {
+	check(StateComponent);
+	check(AttributeComponent);
+	check(CombatComponent);
+
+	if (const AWeapon* Weapon = CombatComponent->GetMainWeapon()) {
+		StateComponent->SetState(MyGameplayTags::Character_State_Attacking);
+		StateComponent->ToggleMovementInput(false);
+		CombatComponent->SetLastAttackType(AttackTypeTag);
+
+		AttributeComponent->ToggleStaminaRegeneration(false);
+
+		UAnimMontage* Montage = Weapon->GetMontageForTag(AttackTypeTag, ComboCounter);
+		if (!Montage) {
+			// 콤보 한계 도달
+			ComboCounter = 0;
+			Montage = Weapon->GetMontageForTag(AttackTypeTag, ComboCounter);
+		}
+		PlayAnimMontage(Montage);
+
+		const float StaminaCost = Weapon->GetStaminaCost(AttackTypeTag);
+		AttributeComponent->DecreaseStamina(StaminaCost);
+		AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
+	}
+}
+
+void APlayerCharacter::ExecuteComboAttack(const FGameplayTag& AttackTypeTag) {
+	if (StateComponent->GetCurrentState() != MyGameplayTags::Character_State_Attacking) {
+		if (bComboSequenceRunning && bCanComboInput == false) {
+			// 애니메이션은 끝났지만 아직 콤보 시퀀스가 유효할 때 - 추가 입력 기회
+			ComboCounter++;
+			UE_LOG(LogTemp, Warning, TEXT("Additional input : Combo Counter = %d"), ComboCounter);
+		}
+		else {
+			UE_LOG(LogTemp, Warning, TEXT(">>> ComboSequence Started <<<"));
+			ResetCombo();
+			bComboSequenceRunning = true;
+
+		}
+		DoAttack(AttackTypeTag);
+		GetWorld()->GetTimerManager().ClearTimer(ComboResetTimerHandle);
+	}
+	else if (bCanComboInput) {
+		// 콤보 윈도우가 열려 있을 때 - 최적의 타이밍
+		bSavedComboInput = true;
+	}
+}
+
+void APlayerCharacter::ResetCombo() {
+	UE_LOG(LogTemp, Warning, TEXT("Combo Reset"));
+
+	bComboSequenceRunning = false;
+	bCanComboInput = false;
+	bSavedComboInput = false;
+	ComboCounter = 0;
+}
+
+void APlayerCharacter::EnableComboWindow() {
+	bCanComboInput = true;
+	UE_LOG(LogTemp, Warning, TEXT("Combo Window Opened : Combo ounter = %d"), ComboCounter);
+}
+
+void APlayerCharacter::DisableComboWindow() {
+	check(CombatComponent);
+	bCanComboInput = false;
+	
+	if (bSavedComboInput) {
+		bSavedComboInput = false;
+		ComboCounter++;
+		UE_LOG(LogTemp, Warning, TEXT("Combo Window Closed : Advancing to next combo = %d"), ComboCounter);
+		DoAttack(CombatComponent->GetLastAttackType());
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("Combo Window Closed : No input reeived"));
+	}
+}
+
+void APlayerCharacter::AttackFinished(const float ComboResetDelay) {
+	UE_LOG(LogTemp, Warning, TEXT("AttackFinished"));
+	if (StateComponent) {
+		StateComponent->ToggleMovementInput(true);
+	}
+	// ComboResetDelay 후에 콤보 시퀀스 종료
+	GetWorld()->GetTimerManager().SetTimer(ComboResetTimerHandle, this, &ThisClass::ResetCombo, ComboResetDelay, false);
 }
