@@ -3,6 +3,9 @@
 
 #include "Components/AttributeComponent.h"
 
+#include "MyGameplayTags.h"
+#include "Components/StateComponent.h"
+
 UAttributeComponent::UAttributeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -30,7 +33,7 @@ bool UAttributeComponent::CheckHasEnoughStamina(float StaminaCost) const {
 
 void UAttributeComponent::DecreaseStamina(float StaminaCost) {
 	CurrentStamina = FMath::Clamp(CurrentStamina - StaminaCost, 0.f, MaxStamina);
-	BroadcastOnAttributeType(EAttributeType::Stamina);
+	BroadcastAttributeChanged(EAttributeType::Stamina);
 }
 
 void UAttributeComponent::ToggleStaminaRegeneration(bool bEnable, float StartDelay) {
@@ -44,7 +47,7 @@ void UAttributeComponent::ToggleStaminaRegeneration(bool bEnable, float StartDel
 	}
 }
 
-void UAttributeComponent::BroadcastOnAttributeType(EAttributeType AttributeType) {
+void UAttributeComponent::BroadcastAttributeChanged(EAttributeType AttributeType) {
 	float Ratio = 0.f;
 	switch (AttributeType) {
 	case EAttributeType::Stamina:
@@ -56,9 +59,27 @@ void UAttributeComponent::BroadcastOnAttributeType(EAttributeType AttributeType)
 	OnAttributeChanged.Broadcast(AttributeType, Ratio);
 }
 
+void UAttributeComponent::TakeDamageAmount(float DamageAmount) {
+	BaseHealth = FMath::Clamp(BaseHealth - DamageAmount, 0.f, MaxHealth);
+
+	BroadcastAttributeChanged(EAttributeType::Health);
+
+	if (BaseHealth <= 0.f) {
+		// Call Death Delegate
+		if (OnDeath.IsBound()) {
+			OnDeath.Broadcast();
+		}
+
+		// Set Death State
+		if (UStateComponent* StateComp = GetOwner()->FindComponentByClass<UStateComponent>()) {
+			StateComp->SetState(MyGameplayTags::Character_State_Death);
+		}
+	}
+}
+
 void UAttributeComponent::RegenrateStaminaHandler() {
 	CurrentStamina = FMath::Clamp(CurrentStamina + StaminaRegenRate, 0.f, MaxStamina);
-	BroadcastOnAttributeType(EAttributeType::Stamina);
+	BroadcastAttributeChanged(EAttributeType::Stamina);
 	if (CurrentStamina >= MaxStamina) {
 		ToggleStaminaRegeneration(false);
 	}

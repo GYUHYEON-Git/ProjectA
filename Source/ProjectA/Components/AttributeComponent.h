@@ -8,6 +8,7 @@
 #include "AttributeComponent.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FDelegateOnAttributeChanged, EAttributeType, float)
+DECLARE_MULTICAST_DELEGATE(FOnDeath)
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTA_API UAttributeComponent : public UActorComponent
@@ -15,7 +16,11 @@ class PROJECTA_API UAttributeComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	// Attribute Delegate
 	FDelegateOnAttributeChanged OnAttributeChanged;
+
+	// Death Delegate
+	FOnDeath OnDeath;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Stamina")
@@ -26,6 +31,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Stamina")
 	float StaminaRegenRate = 0.5f;
+
+	UPROPERTY(EditAnywhere, Category = "Health")
+	float BaseHealth = 100.f;
+
+	UPROPERTY(EditAnywhere, Category = "Health")
+	float MaxHealth = 100.f;
 
 	UPROPERTY()
 	FTimerHandle StaminaRegenTimeHandler;
@@ -46,6 +57,8 @@ public:
 	FORCEINLINE float GetBaseStamina() const { return CurrentStamina; }
 	FORCEINLINE float GetMaxStamina() const { return MaxStamina; }
 	FORCEINLINE float GetStaminaRatio() const { return CurrentStamina / MaxStamina; }
+	FORCEINLINE float GetBaseHealth() const { return BaseHealth; };
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; };
 
 public:
 	bool CheckHasEnoughStamina(float StaminaCost) const;
@@ -54,7 +67,9 @@ public:
 
 	void ToggleStaminaRegeneration(bool bEnable, float StartDelay = 2.f);
 
-	void BroadcastOnAttributeType(EAttributeType AttributeType);
+	void BroadcastAttributeChanged(EAttributeType AttributeType);
+	
+	void TakeDamageAmount(float DamageAmount);
 
 private:
 	void RegenrateStaminaHandler();

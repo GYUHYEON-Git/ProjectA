@@ -15,7 +15,7 @@ void UPlayerHUDWidget::NativeConstruct() {
 	if (APawn* Pawn = GetOwningPlayerPawn()) {
 		if (UAttributeComponent* Attribute = Pawn->GetComponentByClass<UAttributeComponent>()) {
 			Attribute->OnAttributeChanged.AddUObject(this, &ThisClass::OnAttributeChanged);
-			Attribute->BroadcastOnAttributeType(EAttributeType::Stamina);
+			Attribute->BroadcastAttributeChanged(EAttributeType::Stamina);
 		}
 	}
 }

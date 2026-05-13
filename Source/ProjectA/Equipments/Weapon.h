@@ -9,6 +9,7 @@
 
 class UCombatComponent;
 class UMontageActionData;
+class UWeaponCollisionComponent;
 /**
  * 
  */
@@ -25,7 +26,12 @@ protected:
 	FName UnequipSocketName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment | Animation")
-	TObjectPtr<UMontageActionData >MontageActionData;
+	TObjectPtr<UMontageActionData> MontageActionData;
+
+// Component Section
+protected:
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UWeaponCollisionComponent> WeaponCollision;
 
 protected:
 	UPROPERTY()
@@ -36,6 +42,14 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TMap<FGameplayTag, float> StaminaCostMap;
 
+	// Damage
+	UPROPERTY(EditAnywhere)
+	float BaseDamage = 15.f;
+
+	// DamageMultiplier
+	UPROPERTY(EditAnywhere)
+	TMap<FGameplayTag, float> DamageMultiplierMap;
+
 public:
 	AWeapon();
 
@@ -44,10 +58,14 @@ public:
 
 public:
 	float GetStaminaCost(const FGameplayTag& InTag) const;
+	float GetAttackDamage() const;
 
 	UAnimMontage* GetMontageForTag(const FGameplayTag& Tag, const int32 Index = 0) const;
 
 	FORCEINLINE FName GetEquipSocketName() const { return EquipSocketName; }
 	FORCEINLINE FName GetUnequipSocketName() const { return UnequipSocketName; }
+	FORCEINLINE UWeaponCollisionComponent* GetCollision() const { return WeaponCollision; }
 
+public:
+	void OnHitActor(const FHitResult& Hit);
 };
