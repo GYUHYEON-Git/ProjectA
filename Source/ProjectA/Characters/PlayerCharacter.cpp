@@ -12,6 +12,7 @@
 #include "Components/AttributeComponent.h"
 #include "Components/StateComponent.h"
 #include "Components/CombatComponent.h"
+#include "Components/TargetingComponent.h"
 #include "UI/PlayerHUDWidget.h"
 #include "MyGameplayTags.h"
 #include "Interfaces/Interact.h"
@@ -43,6 +44,7 @@ APlayerCharacter::APlayerCharacter() {
 	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("Attribute"));
 	StateComponent = CreateDefaultSubobject<UStateComponent>(TEXT("State"));
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
+	TargetingComponent = CreateDefaultSubobject<UTargetingComponent>(TEXT("Targeting"));
 }
 
 void APlayerCharacter::BeginPlay() {
@@ -82,6 +84,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ThisClass::SpecialAttack);
 		// HeavyAttack
 		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Started, this, &ThisClass::HeavyAttack);
+		EnhancedInputComponent->BindAction(LockOnTargetAction, ETriggerEvent::Started, this, &ThisClass::LockOnTarget);
+		EnhancedInputComponent->BindAction(LeftTargetAction, ETriggerEvent::Started, this, &ThisClass::LeftTarget);
+		EnhancedInputComponent->BindAction(RightTargetAction, ETriggerEvent::Started, this, &ThisClass::RightTarget);
 	}
 }
 
@@ -112,6 +117,10 @@ void APlayerCharacter::Move(const FInputActionValue& Values) {
 }
 
 void APlayerCharacter::Look(const FInputActionValue& Values) {
+	// LockedOn 상태에서는 입력 차단.
+	if (TargetingComponent && TargetingComponent->IsLockOn()) {
+		return;
+	}
 	FVector2D LookDirection = Values.Get<FVector2D>();
 	if (Controller != nullptr) {
 		AddControllerPitchInput(LookDirection.Y);
@@ -252,6 +261,18 @@ void APlayerCharacter::HeavyAttack() {
 	if (CanPerformAttack(AttackTypeTag)) {
 		ExecuteComboAttack(AttackTypeTag);
 	}
+}
+
+void APlayerCharacter::LockOnTarget() {
+	TargetingComponent->ToggleLockOn();
+}
+
+void APlayerCharacter::LeftTarget() {
+	TargetingComponent->SwitchingLockedOnActor(ESwitchingDirection::Left);
+}
+
+void APlayerCharacter::RightTarget() {
+	TargetingComponent->SwitchingLockedOnActor(ESwitchingDirection::Right);
 }
 
 FGameplayTag APlayerCharacter::GetAttackPerform() const {

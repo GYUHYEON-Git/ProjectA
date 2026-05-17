@@ -35,6 +35,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Data")
 	bool bIsFalling;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Data")
+	float Direction;
+
 public:
 	virtual void NativeInitializeAnimation() override;
 

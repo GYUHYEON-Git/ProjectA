@@ -15,6 +15,7 @@ class UInputAction;
 class UAttributeComponent;
 class UStateComponent;
 class UCombatComponent;
+class UTargetingComponent;
 class UPlayerHUDWidget;
 
 UCLASS()
@@ -54,6 +55,18 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> HeavyAttackAction;
 
+	/** LockedOn */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> LockOnTargetAction;
+
+	/** 왼쪽으로 타겟 전환 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> LeftTargetAction;
+
+	/** 오른쪽으로 타겟 전환 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> RightTargetAction;
+
 private:
 	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
@@ -64,6 +77,10 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCombatComponent> CombatComponent;
+
+	/** LockedOn Targeting */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UTargetingComponent> TargetingComponent;
 
 protected:
 	// Montage
@@ -134,11 +151,15 @@ protected:
 	void Interact();
 
 	void ToggleCombat();
-
 	void AutoToggleCombat();
+	/* Attack */
 	void Attack();
 	void SpecialAttack();
 	void HeavyAttack();
+	/* Lock On */
+	void LockOnTarget();
+	void LeftTarget();
+	void RightTarget();
 
 protected:
 	FGameplayTag GetAttackPerform() const;

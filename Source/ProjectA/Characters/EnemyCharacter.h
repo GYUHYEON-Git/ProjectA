@@ -3,23 +3,34 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interfaces/Targeting.h"
 #include "GameFramework/Character.h"
 #include "EnemyCharacter.generated.h"
 
+class UWidgetComponent;
+class USphereComponent;
 class UAttributeComponent;
 class UStateComponent;
 
 UCLASS()
-class PROJECTA_API AEnemyCharacter : public ACharacter
+class PROJECTA_API AEnemyCharacter : public ACharacter, public ITargeting
 {
 	GENERATED_BODY()
 
 protected:
+	// Check Targeting
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USphereComponent> TargetingSphereComponent;
+
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UAttributeComponent> AttributeComponent;
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UStateComponent> StateComponent;
+
+	/** LockOn UI Widget */
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UWidgetComponent> LockOnWidgetComponent;
 
 // Effect Section
 protected:
@@ -62,5 +73,12 @@ protected:
 	void ImpactEffect(const FVector& Location);
 	void HitReaction(const AActor* Attacker);
 	UAnimMontage* GetHitReactAnimation(const AActor* Attacker) const;
+
+public:
+	// ITargeting 
+	// Targeting Logic
+	virtual void OnTargeted(bool bTargeted) override;
+	// Check can be targeted
+	virtual bool CanBeTargeted() override;
 
 };

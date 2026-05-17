@@ -4,9 +4,12 @@
 #include "Characters/EnemyCharacter.h"
 
 #include "Define.h"
+#include "MyGameplayTags.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/AttributeComponent.h"
 #include "Components/StateComponent.h"
+#include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -15,6 +18,21 @@
 AEnemyCharacter::AEnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	// Create Targeting Sphere & Set Collision
+	TargetingSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("TargetingSphere"));
+	TargetingSphereComponent->SetupAttachment(GetRootComponent());
+	TargetingSphereComponent->SetCollisionObjectType(COLLISION_OBJECT_TARGETING);
+	TargetingSphereComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	TargetingSphereComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+
+	// LockOn Widget
+	LockOnWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnWidgetComponent"));
+	LockOnWidgetComponent->SetupAttachment(GetRootComponent());
+	LockOnWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
+	LockOnWidgetComponent->SetDrawSize(FVector2D(30.f, 30.f));
+	LockOnWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	LockOnWidgetComponent->SetVisibility(false);
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -147,5 +165,20 @@ UAnimMontage* AEnemyCharacter::GetHitReactAnimation(const AActor* Attacker) cons
 	}
 
 	return SelectedMontage;
+}
+
+void AEnemyCharacter::OnTargeted(bool bTargeted) {
+	if (LockOnWidgetComponent) {
+		LockOnWidgetComponent->SetVisibility(bTargeted);
+	}
+}
+
+bool AEnemyCharacter::CanBeTargeted() {
+	if (!StateComponent) {
+		return false;
+	}
+	FGameplayTagContainer TagCheck;
+	TagCheck.AddTag(MyGameplayTags::Character_State_Death);
+	return StateComponent->IsCrrentStateEqualToAny(TagCheck) == false;
 }
 
