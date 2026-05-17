@@ -17,6 +17,7 @@
 #include "MyGameplayTags.h"
 #include "Interfaces/Interact.h"
 #include "Equipments/Weapon.h"
+#include "Equipments/FistWeapon.h"
 
 APlayerCharacter::APlayerCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -49,13 +50,20 @@ APlayerCharacter::APlayerCharacter() {
 
 void APlayerCharacter::BeginPlay() {
 	Super::BeginPlay();
+	// Player HUD¸¦ »ý¼º
 	if (PlayerHUDWidgetClass) {
 		PlayerHUDWidget = CreateWidget<UPlayerHUDWidget>(GetWorld(), PlayerHUDWidgetClass);
 		if (PlayerHUDWidget) {
 			PlayerHUDWidget->AddToViewport();
 		}
 	}
-
+	// ÁÖ¸Ô ¹«±â ÀåÂø
+	if (FistWeaponClass) {
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		AFistWeapon* FistWeapon = GetWorld()->SpawnActor<AFistWeapon>(FistWeaponClass, GetActorTransform(), SpawnParams);
+		FistWeapon->EquipItem();
+	}
 }
 
 void APlayerCharacter::Tick(float DeltaTime) {
@@ -137,6 +145,9 @@ bool APlayerCharacter::IsMoving() const {
 
 bool APlayerCharacter::CanToggleCombat() const {
 	check(StateComponent);
+	if (IsValid(CombatComponent->GetMainWeapon()) == false) return false;
+	if (CombatComponent->GetMainWeapon()->GetCombatType() == ECombatType::MeleeFists) return false;
+
 	FGameplayTagContainer CheckTags;
 	CheckTags.AddTag(MyGameplayTags::Character_State_Attacking);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
@@ -216,7 +227,6 @@ void APlayerCharacter::Interact() {
 }
 
 void APlayerCharacter::ToggleCombat() {
-	check(CombatComponent);
 	check(CombatComponent);
 	if (CombatComponent) {
 		if (const AWeapon* Weapon = CombatComponent->GetMainWeapon()) {
@@ -384,4 +394,16 @@ void APlayerCharacter::AttackFinished(const float ComboResetDelay) {
 	}
 	// ComboResetDelay ÈÄ¿¡ ÄÞº¸ ½ÃÄö½º Á¾·á
 	GetWorld()->GetTimerManager().SetTimer(ComboResetTimerHandle, this, &ThisClass::ResetCombo, ComboResetDelay, false);
+}
+
+void APlayerCharacter::ActivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) {
+	if (CombatComponent) {
+		CombatComponent->GetMainWeapon()->ActivateCollision(WeaponCollisionType);
+	}
+}
+
+void APlayerCharacter::DeactivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) {
+	if (CombatComponent) {
+		CombatComponent->GetMainWeapon()->DeactivateCollision(WeaponCollisionType);
+	}
 }

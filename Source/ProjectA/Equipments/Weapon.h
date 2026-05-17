@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Define.h"
 #include "GameplayTagContainer.h"
 #include "Equipments/Equipment.h"
 #include "Weapon.generated.h"
@@ -25,13 +26,20 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment | Socket")
 	FName UnequipSocketName;
 
+	// Combat Type
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
+	ECombatType CombatType = ECombatType::SwordShield;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment | Animation")
 	TObjectPtr<UMontageActionData> MontageActionData;
 
 // Component Section
-protected:
+protected:	
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UWeaponCollisionComponent> WeaponCollision;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UWeaponCollisionComponent> SecondWeaponCollision;
 
 protected:
 	UPROPERTY()
@@ -65,6 +73,11 @@ public:
 	FORCEINLINE FName GetEquipSocketName() const { return EquipSocketName; }
 	FORCEINLINE FName GetUnequipSocketName() const { return UnequipSocketName; }
 	FORCEINLINE UWeaponCollisionComponent* GetCollision() const { return WeaponCollision; }
+	FORCEINLINE ECombatType GetCombatType() const { return CombatType; }
+
+public:
+	virtual void ActivateCollision(EWeaponCollisionType InCollisionType);
+	virtual void DeactivateCollision(EWeaponCollisionType InCollisionType);
 
 public:
 	void OnHitActor(const FHitResult& Hit);

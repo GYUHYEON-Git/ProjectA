@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Define.h"
 #include "Animation/AnimInstance.h"
 #include "MyAnimInstance.generated.h"
 
@@ -38,6 +39,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Data")
 	float Direction;
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat Data")
+	bool bCombatEnabled = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat Data")
+	ECombatType CombatType = ECombatType::None;
+
 public:
 	virtual void NativeInitializeAnimation() override;
 
@@ -48,5 +56,12 @@ public:
 
 	UFUNCTION()
 	void AnimNotify_ResetState();
-	
+
+// Animation
+public:
+	void UpdateCombatMode(const ECombatType InCombatType);
+
+// Delegate functions
+protected:
+	void OnChangedCombat(const bool bInCombatEnabled);
 };

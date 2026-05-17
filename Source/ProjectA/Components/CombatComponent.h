@@ -9,10 +9,16 @@
 
 class AWeapon;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FDelegateOnChangedCombat, bool)
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTA_API UCombatComponent : public UActorComponent
 {
 	GENERATED_BODY()
+
+public:
+	/* Combat 상태 전환을 알리는 Delegate */
+	FDelegateOnChangedCombat OnChangedCombat;
 
 protected:
 	UPROPERTY()
@@ -37,7 +43,7 @@ public:
 	void SetWeapon(AWeapon* NewWeapon);
 
 	FORCEINLINE bool IsCombatEnabled() const { return bCombatEnabled; }
-	FORCEINLINE void SetCombatEnabled(const bool bEnabled) { bCombatEnabled = bEnabled; }
+	void SetCombatEnabled(const bool bEnabled);
 
 	FORCEINLINE AWeapon* GetMainWeapon() const { return MainWeapon; }
 

@@ -38,3 +38,10 @@ void UCombatComponent::SetWeapon(AWeapon* NewWeapon) {
 	}
 	MainWeapon = NewWeapon;
 }
+
+void UCombatComponent::SetCombatEnabled(const bool bEnabled) {
+	bCombatEnabled = bEnabled;
+	if (OnChangedCombat.IsBound()) {
+		OnChangedCombat.Broadcast(bCombatEnabled);
+	}
+}

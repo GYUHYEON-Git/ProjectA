@@ -3,11 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interfaces/CombatInterface.h"
 #include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "PlayerCharacter.generated.h"
 
 struct FInputActionValue;
+class AFistWeapon;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
@@ -19,7 +21,7 @@ class UTargetingComponent;
 class UPlayerHUDWidget;
 
 UCLASS()
-class PROJECTA_API APlayerCharacter : public ACharacter	
+class PROJECTA_API APlayerCharacter : public ACharacter, public ICombatInterface
 {
 	GENERATED_BODY()
 
@@ -94,6 +96,11 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UPlayerHUDWidget> PlayerHUDWidget;
+
+protected:
+	// ÁÖ¸Ô ¹«±â
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AFistWeapon> FistWeaponClass;
 
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Movement Data")
@@ -177,5 +184,10 @@ public:
 	void EnableComboWindow();
 	void DisableComboWindow();
 	void AttackFinished(const float ComboResetDelay);
+
+public:
+	virtual void ActivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) override;
+	virtual void DeactivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) override;
+
 
 };

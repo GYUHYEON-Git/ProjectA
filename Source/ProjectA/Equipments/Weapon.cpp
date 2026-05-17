@@ -4,14 +4,19 @@
 #include "Equipments/Weapon.h"
 
 #include "MyGameplayTags.h"
+#include "Characters/PlayerCharacter.h"
+#include "Animations/MyAnimInstance.h"
 #include "Data/MontageActionData.h"
 #include "Components/CombatComponent.h"
 #include "Components/WeaponCollisionComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 AWeapon::AWeapon() {
-	WeaponCollision = CreateDefaultSubobject<UWeaponCollisionComponent>("WeaponCollision");
+	WeaponCollision = CreateDefaultSubobject<UWeaponCollisionComponent>("MainCollision");
 	WeaponCollision->OnHitActor.AddUObject(this, &ThisClass::OnHitActor);
+
+	SecondWeaponCollision = CreateDefaultSubobject<UWeaponCollisionComponent>("SecondCollision");
+	SecondWeaponCollision->OnHitActor.AddUObject(this, &ThisClass::OnHitActor);
 
 	StaminaCostMap.Add(MyGameplayTags::Character_Attack_Light, 7.f);
 	StaminaCostMap.Add(MyGameplayTags::Character_Attack_Running, 12.f);
@@ -31,6 +36,11 @@ void AWeapon::EquipItem() {
 		const FName AttackSocket = CombatComponent->IsCombatEnabled() ? EquipSocketName : UnequipSocketName;
 		AttachToOwner(AttackSocket);
 		WeaponCollision->SetWeaponMesh(Mesh);
+		if (APlayerCharacter* OwnerCharacter = Cast<APlayerCharacter>(GetOwner())) {
+			if (UMyAnimInstance* Anim = Cast<UMyAnimInstance>(OwnerCharacter->GetMesh()->GetAnimInstance())) {
+				Anim->UpdateCombatMode(CombatType);
+			}
+		}
 		WeaponCollision->AddIgnoredActor(GetOwner());
 	}
 }
@@ -55,6 +65,28 @@ float AWeapon::GetAttackDamage() const {
 		}
 	}
 	return BaseDamage;
+}
+
+void AWeapon::ActivateCollision(EWeaponCollisionType InCollisionType) {
+	switch (InCollisionType) {
+	case EWeaponCollisionType::MainCollision:
+		WeaponCollision->TurnOnCollision();
+		break;
+	case EWeaponCollisionType::SecondCollision:
+		SecondWeaponCollision->TurnOnCollision();
+		break;
+	}
+}
+
+void AWeapon::DeactivateCollision(EWeaponCollisionType InCollisionType) {
+	switch (InCollisionType) {
+	case EWeaponCollisionType::MainCollision:
+		WeaponCollision->TurnOffCollision();
+		break;
+	case EWeaponCollisionType::SecondCollision:
+		SecondWeaponCollision->TurnOffCollision();
+		break;
+	}
 }
 
 void AWeapon::OnHitActor(const FHitResult& Hit) {

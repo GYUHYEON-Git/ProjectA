@@ -8,12 +8,17 @@
 #include "GameFramework/Character.h"
 #include "Characters/PlayerCharacter.h"
 #include "Components/StateComponent.h"
+#include "Components/CombatComponent.h"
+
 
 void UMyAnimInstance::NativeInitializeAnimation() {
 	Super::NativeInitializeAnimation();
 	Character = Cast<ACharacter>(GetOwningActor());
 	if (Character) {
 		MovementComponent = Character->GetCharacterMovement();
+		if (UCombatComponent* CombatComponent = Character->GetComponentByClass<UCombatComponent>()) {
+			CombatComponent->OnChangedCombat.AddUObject(this, &ThisClass::OnChangedCombat);
+		}
 	}
 }
 
@@ -39,4 +44,12 @@ void UMyAnimInstance::AnimNotify_ResetState() {
 	if (const APlayerCharacter* LocalCharacter = Cast<APlayerCharacter>(GetOwningActor())) {
 		LocalCharacter->GetStateComponent()->ClearState();
 	}
+}
+
+void UMyAnimInstance::UpdateCombatMode(const ECombatType InCombatType) {
+	CombatType = InCombatType;
+}
+
+void UMyAnimInstance::OnChangedCombat(const bool bInCombatEnabled) {
+	bCombatEnabled = bInCombatEnabled;
 }
