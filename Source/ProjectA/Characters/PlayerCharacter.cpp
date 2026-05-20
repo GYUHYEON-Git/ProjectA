@@ -50,14 +50,14 @@ APlayerCharacter::APlayerCharacter() {
 
 void APlayerCharacter::BeginPlay() {
 	Super::BeginPlay();
-	// Player HUD를 생성
+	// Create the player HUD
 	if (PlayerHUDWidgetClass) {
 		PlayerHUDWidget = CreateWidget<UPlayerHUDWidget>(GetWorld(), PlayerHUDWidgetClass);
 		if (PlayerHUDWidget) {
 			PlayerHUDWidget->AddToViewport();
 		}
 	}
-	// 주먹 무기 장착
+	// Equip the fist weapon
 	if (FistWeaponClass) {
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = this;
@@ -84,11 +84,11 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Interact);
 
 		EnhancedInputComponent->BindAction(ToggleCombatAction, ETriggerEvent::Started, this, &ThisClass::ToggleCombat);
-		// Combat 상태로 자동 전환
+		// Automatically switch to Combat state
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ThisClass::AutoToggleCombat);
-		// 일반 공격
+		// Normal attack
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Canceled, this, &ThisClass::Attack);
-		// 특수 공격
+		// Special attack
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ThisClass::SpecialAttack);
 		// HeavyAttack
 		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Started, this, &ThisClass::HeavyAttack);
@@ -125,7 +125,7 @@ void APlayerCharacter::Move(const FInputActionValue& Values) {
 }
 
 void APlayerCharacter::Look(const FInputActionValue& Values) {
-	// LockedOn 상태에서는 입력 차단.
+	// Block input while in the LockedOn state
 	if (TargetingComponent && TargetingComponent->IsLockOn()) {
 		return;
 	}
@@ -214,7 +214,7 @@ void APlayerCharacter::Interact() {
 		ObjectTypes,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::None,
 		OutHit,
 		true);
 	if (bHit) {
@@ -316,6 +316,10 @@ void APlayerCharacter::DoAttack(const FGameplayTag& AttackTypeTag) {
 	check(CombatComponent);
 
 	if (const AWeapon* Weapon = CombatComponent->GetMainWeapon()) {
+		if (Weapon->HasValidMontage(AttackTypeTag) == false) {
+			return;
+		}
+
 		StateComponent->SetState(MyGameplayTags::Character_State_Attacking);
 		StateComponent->ToggleMovementInput(false);
 		CombatComponent->SetLastAttackType(AttackTypeTag);
@@ -324,13 +328,13 @@ void APlayerCharacter::DoAttack(const FGameplayTag& AttackTypeTag) {
 
 		UAnimMontage* Montage = Weapon->GetMontageForTag(AttackTypeTag, ComboCounter);
 		if (!Montage) {
-			// 콤보 한계 도달
+			// Combo limit reached
 			ComboCounter = 0;
 			Montage = Weapon->GetMontageForTag(AttackTypeTag, ComboCounter);
 		}
 		PlayAnimMontage(Montage);
-
 		const float StaminaCost = Weapon->GetStaminaCost(AttackTypeTag);
+		AttributeComponent->DecreaseStamina(StaminaCost);
 		AttributeComponent->DecreaseStamina(StaminaCost);
 		AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
 	}
@@ -339,7 +343,7 @@ void APlayerCharacter::DoAttack(const FGameplayTag& AttackTypeTag) {
 void APlayerCharacter::ExecuteComboAttack(const FGameplayTag& AttackTypeTag) {
 	if (StateComponent->GetCurrentState() != MyGameplayTags::Character_State_Attacking) {
 		if (bComboSequenceRunning && bCanComboInput == false) {
-			// 애니메이션은 끝났지만 아직 콤보 시퀀스가 유효할 때 - 추가 입력 기회
+			// The animation has ended, but the combo sequence is still valid - allow additional input
 			ComboCounter++;
 			UE_LOG(LogTemp, Warning, TEXT("Additional input : Combo Counter = %d"), ComboCounter);
 		}
@@ -353,7 +357,7 @@ void APlayerCharacter::ExecuteComboAttack(const FGameplayTag& AttackTypeTag) {
 		GetWorld()->GetTimerManager().ClearTimer(ComboResetTimerHandle);
 	}
 	else if (bCanComboInput) {
-		// 콤보 윈도우가 열려 있을 때 - 최적의 타이밍
+		// The combo window is open - optimal timing for the next input
 		bSavedComboInput = true;
 	}
 }
@@ -392,7 +396,7 @@ void APlayerCharacter::AttackFinished(const float ComboResetDelay) {
 	if (StateComponent) {
 		StateComponent->ToggleMovementInput(true);
 	}
-	// ComboResetDelay 후에 콤보 시퀀스 종료
+	// End the combo sequence after ComboResetDelay
 	GetWorld()->GetTimerManager().SetTimer(ComboResetTimerHandle, this, &ThisClass::ResetCombo, ComboResetDelay, false);
 }
 

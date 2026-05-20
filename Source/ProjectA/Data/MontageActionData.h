@@ -31,5 +31,5 @@ protected:
 	
 public:
 	UAnimMontage* GetMontageForTag(const FGameplayTag& GroupTag, const int32 Index);
-
+	bool HasValidMontage(const FGameplayTag& GroupTag);
 };

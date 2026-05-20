@@ -16,15 +16,15 @@ class PROJECTA_API UTargetingComponent : public UActorComponent
 	GENERATED_BODY()
 
 protected:
-	/** LockOn 시킬 후보군을 감지할 영역의 크기(반지름) */
+	/** Radius of the area used to detect LockOn candidates */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float TargetingRadius = 500.f;
 
-	/** LockOn시 카메라 회전 속도 */
+	/** Camera rotation speed while LockOn is active */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float FaceLockOnRotationSpeed = 20.f;
 
-	/** 디버그 드로우 타입 */
+	/** Debug draw type */
 	UPROPERTY(EditAnywhere)
 	TEnumAsByte<EDrawDebugTrace::Type> DrawDebugType = EDrawDebugTrace::ForDuration;
 
@@ -35,11 +35,11 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UCameraComponent> Camera;
 
-	/** 현재 LockOn된 대상 */
+	/** Currently locked-on target */
 	UPROPERTY()
 	TObjectPtr<AActor> LockedTargetActor;
 
-	/** LockOn 상태 관리 */
+	/** Tracks the LockOn state */
 	bool bIsLockOn = false;
 
 public:	
@@ -55,32 +55,32 @@ public:
 	/** LockedOn On/Off */
 	void ToggleLockOn();
 
-	/** LockOn 대상 스위칭 */
+	/** Switch the current LockOn target */
 	void SwitchingLockedOnActor(ESwitchingDirection InDirection);
 
-	/** LockOn 상태 */
+	/** Current LockOn state */
 	FORCEINLINE bool IsLockOn() const { return bIsLockOn; }
 
 protected:
-	/** LockOn 시킬 후보군을 찾습니다. */
+	/** Find potential LockOn candidates */
 	void FindTargets(TArray<AActor*>& OutTargetingActors) const;
 
-	/** 최종 LockOn 시킬 대상을 찾아 줍니다. */
+	/** Select the final LockOn target */
 	AActor* FindClosestTarget(TArray<AActor*>& InTargets, ESwitchingDirection InDirection = ESwitchingDirection::None) const;
 
-	/** 캐릭터가 카메라(ControlRotation)의 회전에 동기화 되도록 설정 */
+	/** Make the character follow the camera (ControlRotation) */
 	void OrientCamera() const;
 
-	/** 캐릭터가 이동 방향으로 회전하도록 설정 */
+	/** Make the character rotate toward the movement direction */
 	void OrientMovement() const;
 
-	/** LockedOn 상태에서 카메라 회전 제어 */
+	/** Control camera rotation while LockedOn */
 	void FaceLockOnActor() const;
 
 	/** LockOn */
 	void LockOnTarget();
 
-	/** LockOn 중지 */
+	/** Stop LockOn */
 	void StopLockOn();
 
 		

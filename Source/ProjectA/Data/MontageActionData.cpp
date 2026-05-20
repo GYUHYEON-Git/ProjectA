@@ -11,3 +11,10 @@ UAnimMontage* UMontageActionData::GetMontageForTag(const FGameplayTag& GroupTag,
 	}
 	return nullptr;
 }
+
+bool UMontageActionData::HasValidMontage(const FGameplayTag& GroupTag) {
+	if (FMontageGroup* MontageGroup = MontageGroupMap.Find(GroupTag)) {
+		return true;
+	}
+	return false;
+}

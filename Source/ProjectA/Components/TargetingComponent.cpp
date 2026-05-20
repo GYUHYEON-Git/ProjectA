@@ -38,10 +38,9 @@ void UTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	const float Distance = FVector::Distance(Character->GetActorLocation(), LockedTargetActor->GetActorLocation());
 
 	if (ITargeting* Targeting = Cast<ITargeting>(LockedTargetActor)) {
-		// TargetingRadius 보다 멀어지면 LockedOn을 중단한다.
+		// Stop LockedOn if the target moves beyond TargetingRadius
 		if (Targeting->CanBeTargeted() == false || Distance > TargetingRadius + 50.f) {
 			GEngine->AddOnScreenDebugMessage(0, 1.5f, FColor::Cyan, FString::Printf(TEXT("StopLockOn")));
-			GEngine->AddOnScreenDebugMessage(0, 1.5f, FColor::Cyan, FString::Printf(TEXT("Distance: %f"), Distance));
 			StopLockOn();
 		}
 		else {
@@ -63,10 +62,10 @@ void UTargetingComponent::ToggleLockOn() {
 void UTargetingComponent::SwitchingLockedOnActor(ESwitchingDirection InDirection) {
 	if (::IsValid(LockedTargetActor)) {
 		if (ITargeting* Targeting = Cast<ITargeting>(LockedTargetActor)) {
-			// 기존 타겟 해제.
+			// Clear the current target
 			Targeting->OnTargeted(false);
 
-			// 신규 타겟 지정.
+			// Assign the new target
 			TArray<AActor*> OutTargets;
 			FindTargets(OutTargets);
 			AActor* TargetActor = FindClosestTarget(OutTargets, InDirection);
@@ -134,7 +133,7 @@ AActor* UTargetingComponent::FindClosestTarget(TArray<AActor*>& InTargets, ESwit
 		TArray<AActor*> ActorsToIgnore;
 
 
-		// 대상이 ECC_Visibility 채널에 대해서 Response가 Block으로 설정되어 있는지 확인 필요.
+		// Ensure the target blocks the ECC_Visibility channel
 		const bool bHit = UKismetSystemLibrary::LineTraceSingle(
 			GetOwner(),
 			Start,
@@ -147,16 +146,16 @@ AActor* UTargetingComponent::FindClosestTarget(TArray<AActor*>& InTargets, ESwit
 			true);
 
 		if (bHit) {
-			// 카메라의 시야를 기준으로 하기 때문에 내적 계산은 카메라 기준으로 처리합니다.
-			// Left 방향에 따른 내적 계산.
+			// Since this is based on the camera view, calculate the dot product in camera space
+			// Calculate the dot product for the left direction
 			if (InDirection == ESwitchingDirection::Left) {
-				// 비교대상 Vector가 Normal 방향이기 때문에 반대로 계산됩니다.
+				// The comparison vector points along the normal direction, so the result is inverted
 				if (FVector::DotProduct(Camera->GetRightVector(), OutHit.Normal) > 0.f == false) {
 					continue;
 				}
 			}
 
-			// Right 방향에 따른 내적 계산.
+			// Calculate the dot product for the right direction
 			if (InDirection == ESwitchingDirection::Right) {
 				if (FVector::DotProduct(Camera->GetRightVector(), OutHit.Normal) < 0.f == false) {
 					continue;
@@ -165,8 +164,8 @@ AActor* UTargetingComponent::FindClosestTarget(TArray<AActor*>& InTargets, ESwit
 
 			AActor* HitActor = OutHit.GetActor();
 
-			// 플레이어와 가장 가까운 타겟을 찾는다.
-			// 전방에 있는 가장 가까운 타겟을 찾기 위해서 카메라의 ForwardVector와 LookAt Vector를 내적합니다.
+			// Find the target closest to the player
+			// Use the dot product of the camera ForwardVector and the LookAt vector to find the closest target in front
 			const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Character->GetActorLocation(), HitActor->GetActorLocation());
 			float CheckValue = FVector::DotProduct(Camera->GetForwardVector(), LookAtRotation.Vector());
 
@@ -197,7 +196,7 @@ void UTargetingComponent::FaceLockOnActor() const {
 
 	FRotator InterpRotation = FMath::RInterpTo(CurrentControlRotation, TargetLookAtRotation, GetWorld()->GetDeltaSeconds(), FaceLockOnRotationSpeed);
 
-	// Roll은 기존 ControlRotation.Roll값으로 유지하고 Pitch/Yaw 값만 InterpRotation의 값으로 적용.
+	// Preserve the existing ControlRotation.Roll and apply only the Pitch and Yaw from InterpRotation
 	Character->GetController()->SetControlRotation(FRotator(InterpRotation.Pitch, InterpRotation.Yaw, CurrentControlRotation.Roll));
 }
 

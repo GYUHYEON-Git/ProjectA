@@ -69,6 +69,7 @@ public:
 	float GetAttackDamage() const;
 
 	UAnimMontage* GetMontageForTag(const FGameplayTag& Tag, const int32 Index = 0) const;
+	bool HasValidMontage(const FGameplayTag& Tag) const;
 
 	FORCEINLINE FName GetEquipSocketName() const { return EquipSocketName; }
 	FORCEINLINE FName GetUnequipSocketName() const { return UnequipSocketName; }

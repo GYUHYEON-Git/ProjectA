@@ -17,7 +17,7 @@ class PROJECTA_API UCombatComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	/* Combat 상태 전환을 알리는 Delegate */
+	/* Delegate broadcast when the Combat state changes */
 	FDelegateOnChangedCombat OnChangedCombat;
 
 protected:

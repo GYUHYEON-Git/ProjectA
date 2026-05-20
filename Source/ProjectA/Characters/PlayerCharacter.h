@@ -61,11 +61,11 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> LockOnTargetAction;
 
-	/** 왼쪽으로 타겟 전환 */
+	/** Switch target to the left. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> LeftTargetAction;
 
-	/** 오른쪽으로 타겟 전환 */
+	/** Switch target to the right. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> RightTargetAction;
 
@@ -98,7 +98,7 @@ protected:
 	TObjectPtr<UPlayerHUDWidget> PlayerHUDWidget;
 
 protected:
-	// 주먹 무기
+	// Fist weapon
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AFistWeapon> FistWeaponClass;
 
@@ -114,15 +114,15 @@ protected:
 
 // Combo Section
 protected:
-	/* 콤보 시퀀스 진행중 */
+	/* Is the combo sequence in progress? */
 	bool bComboSequenceRunning = false;
-	/* 콤보 입력 가능? */
+	/* Can the player input the next combo attack? */
 	bool bCanComboInput = false;
-	/* 콤보 카운터 */
+	/* Current combo count. */
 	int32 ComboCounter = 0;
-	/* 콤보 입력 여부 */
+	/* Whether combo input has been received. */
 	bool bSavedComboInput = false;
-	/* 콤보 리셋 타이머 핸들 */
+	/* Timer handle used to reset the combo. */
 	FTimerHandle ComboResetTimerHandle;
 
 public:

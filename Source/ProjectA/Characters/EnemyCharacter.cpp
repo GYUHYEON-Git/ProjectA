@@ -62,7 +62,8 @@ float AEnemyCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent,
 
 	if (AttributeComponent) {
 		AttributeComponent->TakeDamageAmount(ActualDamage);
-		GEngine->AddOnScreenDebugMessage(0, 1.5f, FColor::Cyan, FString::Printf(TEXT("Damaged : %f"), ActualDamage));
+		GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Cyan, FString::Printf(TEXT("HP : %f"), AttributeComponent->GetBaseHealth()));
+		GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Cyan, FString::Printf(TEXT("Damaged : %f"), ActualDamage));
 	}
 
 	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID)) {
@@ -121,11 +122,11 @@ void AEnemyCharacter::HitReaction(const AActor* Attacker) {
 }
 
 UAnimMontage* AEnemyCharacter::GetHitReactAnimation(const AActor* Attacker) const {
-	// LookAt 회전값을 구합니다. (현재 Actor가 공격자를 바라보는 회전값)
+	// Calculate the LookAt rotation (the rotation required for this actor to face the attacker)
 	const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Attacker->GetActorLocation());
-	// 현재 Actor의 회전값과 LookAt 회전값의 차이를 구합니다.
+	// Calculate the difference between the current actor rotation and the LookAt rotation
 	const FRotator DeltaRotation = UKismetMathLibrary::NormalizedDeltaRotator(GetActorRotation(), LookAtRotation);
-	// Z축 기준의 회전값 차이만을 취합니다.
+	// Use only the rotation difference around the Z axis
 	const float DeltaZ = DeltaRotation.Yaw;
 
 	EHitDirection HitDirection = EHitDirection::Front;

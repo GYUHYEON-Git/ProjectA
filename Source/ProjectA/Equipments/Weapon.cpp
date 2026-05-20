@@ -56,6 +56,10 @@ UAnimMontage* AWeapon::GetMontageForTag(const FGameplayTag& Tag, const int32 Ind
 	return MontageActionData->GetMontageForTag(Tag, Index);
 }
 
+bool AWeapon::HasValidMontage(const FGameplayTag& Tag) const {
+	return MontageActionData->HasValidMontage(Tag);
+}
+
 float AWeapon::GetAttackDamage() const {
 	if (const AActor* OwnerActor = GetOwner()) {
 		const FGameplayTag LastAttackType = CombatComponent->GetLastAttackType();

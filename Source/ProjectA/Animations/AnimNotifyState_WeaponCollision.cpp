@@ -5,11 +5,6 @@
 
 #include "Interfaces/CombatInterface.h"
 
-//#include "Components/CombatComponent.h"
-//#include "Components/WeaponCollisionComponent.h"
-//#include "Equipments/Weapon.h"
-
-
 UAnimNotifyState_WeaponCollision::UAnimNotifyState_WeaponCollision(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
 {

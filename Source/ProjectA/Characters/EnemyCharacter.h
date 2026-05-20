@@ -11,6 +11,7 @@ class UWidgetComponent;
 class USphereComponent;
 class UAttributeComponent;
 class UStateComponent;
+class ATargetPoint;
 
 UCLASS()
 class PROJECTA_API AEnemyCharacter : public ACharacter, public ITargeting
@@ -53,6 +54,13 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Montage | HitReact")
 	TObjectPtr<UAnimMontage> HitReactAnimRight;
+
+protected:
+	UPROPERTY(EditAnywhere, Category = "AI | Patrol")
+	TArray<ATargetPoint*> PatrolPoints;
+
+	UPROPERTY(EditAnywhere, Category = "AI | Patrol")
+	int32 PatrolIndex = 0;
 
 public:
 	AEnemyCharacter();

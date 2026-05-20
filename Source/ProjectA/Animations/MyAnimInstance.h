@@ -57,11 +57,11 @@ public:
 	UFUNCTION()
 	void AnimNotify_ResetState();
 
-// Animation
 public:
+	// Animation
 	void UpdateCombatMode(const ECombatType InCombatType);
 
-// Delegate functions
 protected:
+	// Delegate functions
 	void OnChangedCombat(const bool bInCombatEnabled);
 };
