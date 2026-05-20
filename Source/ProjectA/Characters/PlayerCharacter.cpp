@@ -214,7 +214,7 @@ void APlayerCharacter::Interact() {
 		ObjectTypes,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::None,
+		EDrawDebugTrace::ForDuration,
 		OutHit,
 		true);
 	if (bHit) {

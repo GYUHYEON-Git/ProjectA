@@ -171,13 +171,13 @@ protected:
 protected:
 	FGameplayTag GetAttackPerform() const;
 
-	/* 공격 가능 조건 체크 */
+	/* Check whether an attack can be performed. */
 	bool CanPerformAttack(const FGameplayTag& AttackTypeTag) const;
-	/* 공격 실행 */
+	/* Execute the attack. */
 	void DoAttack(const FGameplayTag& AttackTypeTag);
-	/* 콤보 실행 */
+	/* Execute the combo. */
 	void ExecuteComboAttack(const FGameplayTag& AttackTypeTag);
-	/* 콤보 초기화 */
+	/* Reset the combo. */
 	void ResetCombo();
 
 public:
