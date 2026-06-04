@@ -57,9 +57,9 @@ protected:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "AI | Patrol")
-	TArray<ATargetPoint*> PatrolPoints;
+	TArray<TObjectPtr<ATargetPoint>> PatrolPoints;
 
-	UPROPERTY(EditAnywhere, Category = "AI | Patrol")
+	UPROPERTY(VisibleAnywhere, Category = "AI | Patrol")
 	int32 PatrolIndex = 0;
 
 public:
@@ -88,5 +88,13 @@ public:
 	virtual void OnTargeted(bool bTargeted) override;
 	// Check can be targeted
 	virtual bool CanBeTargeted() override;
+
+public:
+	FORCEINLINE ATargetPoint* GetPatrolPoint(){
+		return PatrolPoints.Num() >= (PatrolIndex + 1) ? PatrolPoints[PatrolIndex] : nullptr;
+	}
+	FORCEINLINE void IncrementPatrolIndex() {
+		PatrolIndex = (PatrolIndex + 1) % PatrolPoints.Num();
+	}
 
 };
