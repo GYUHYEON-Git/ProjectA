@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Interfaces/Targeting.h"
+#include "Interfaces/CombatInterface.h"
 #include "GameFramework/Character.h"
 #include "EnemyCharacter.generated.h"
 
@@ -11,10 +12,12 @@ class UWidgetComponent;
 class USphereComponent;
 class UAttributeComponent;
 class UStateComponent;
+class UCombatComponent;
 class ATargetPoint;
+class AWeapon;
 
 UCLASS()
-class PROJECTA_API AEnemyCharacter : public ACharacter, public ITargeting
+class PROJECTA_API AEnemyCharacter : public ACharacter, public ITargeting, public ICombatInterface
 {
 	GENERATED_BODY()
 
@@ -29,6 +32,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UStateComponent> StateComponent;
 
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UCombatComponent> CombatComponent;
+
 	/** LockOn UI Widget */
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UWidgetComponent> LockOnWidgetComponent;
@@ -41,26 +47,16 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TObjectPtr<UParticleSystem> ImpactParticle;
 
-// Montage Section
-protected:
-	UPROPERTY(EditAnywhere, Category = "Montage | HitReact")
-	TObjectPtr<UAnimMontage> HitReactAnimFront;
-
-	UPROPERTY(EditAnywhere, Category = "Montage | HitReact")
-	TObjectPtr<UAnimMontage> HitReactAnimBack;
-
-	UPROPERTY(EditAnywhere, Category = "Montage | HitReact")
-	TObjectPtr<UAnimMontage> HitReactAnimLeft;
-
-	UPROPERTY(EditAnywhere, Category = "Montage | HitReact")
-	TObjectPtr<UAnimMontage> HitReactAnimRight;
-
 protected:
 	UPROPERTY(EditAnywhere, Category = "AI | Patrol")
 	TArray<TObjectPtr<ATargetPoint>> PatrolPoints;
 
 	UPROPERTY(VisibleAnywhere, Category = "AI | Patrol")
 	int32 PatrolIndex = 0;
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AWeapon> DefaultWeaponClass;
 
 public:
 	AEnemyCharacter();
@@ -80,7 +76,6 @@ public:
 protected:
 	void ImpactEffect(const FVector& Location);
 	void HitReaction(const AActor* Attacker);
-	UAnimMontage* GetHitReactAnimation(const AActor* Attacker) const;
 
 public:
 	// ITargeting 
@@ -88,6 +83,11 @@ public:
 	virtual void OnTargeted(bool bTargeted) override;
 	// Check can be targeted
 	virtual bool CanBeTargeted() override;
+
+	// ICombatInterface ±¸Çö.
+	virtual void ActivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) override;
+	virtual void DeactivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) override;
+	virtual void PerformAttack(FGameplayTag& AttackTypeTag, FOnMontageEnded& MontageEndedDelegate) override;
 
 public:
 	FORCEINLINE ATargetPoint* GetPatrolPoint(){

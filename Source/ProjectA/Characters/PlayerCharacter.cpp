@@ -13,11 +13,16 @@
 #include "Components/StateComponent.h"
 #include "Components/CombatComponent.h"
 #include "Components/TargetingComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "UI/PlayerHUDWidget.h"
 #include "MyGameplayTags.h"
 #include "Interfaces/Interact.h"
 #include "Equipments/Weapon.h"
 #include "Equipments/FistWeapon.h"
+#include "Engine/DamageEvents.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+
 
 APlayerCharacter::APlayerCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -46,6 +51,8 @@ APlayerCharacter::APlayerCharacter() {
 	StateComponent = CreateDefaultSubobject<UStateComponent>(TEXT("State"));
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
 	TargetingComponent = CreateDefaultSubobject<UTargetingComponent>(TEXT("Targeting"));
+
+	AttributeComponent->OnDeath.AddUObject(this, &ThisClass::OnDeath);
 }
 
 void APlayerCharacter::BeginPlay() {
@@ -104,6 +111,68 @@ void APlayerCharacter::NotifyControllerChanged() {
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer())) {
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
+	}
+}
+
+float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) {
+	float ActualDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+
+	if (AttributeComponent) {
+		AttributeComponent->TakeDamageAmount(ActualDamage);
+		GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Cyan, FString::Printf(TEXT("HP : %f"), AttributeComponent->GetBaseHealth()));
+		GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Cyan, FString::Printf(TEXT("Damaged : %f"), ActualDamage));
+	}
+
+	StateComponent->SetState(MyGameplayTags::Character_State_Hit);
+	StateComponent->ToggleMovementInput(false);
+
+	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID)) {
+		const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
+
+		// ShotDirection
+		FVector ShotDirection = PointDamageEvent->ShotDirection;
+		// ImpactPoint
+		FVector ImpactPoint = PointDamageEvent->HitInfo.ImpactPoint;
+		// ImpactDirection
+		FVector ImpactDirection = PointDamageEvent->HitInfo.ImpactNormal;
+		// HitLocation
+		FVector HitLocation = PointDamageEvent->HitInfo.Location;
+
+		ImpactEffect(ImpactPoint);
+
+		HitReaction(EventInstigator->GetPawn());
+	}
+
+	return ActualDamage;
+}
+
+void APlayerCharacter::ImpactEffect(const FVector& Location) {
+	if (ImpactSound) {
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, Location);
+	}
+
+	if (ImpactParticle) {
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticle, Location);
+	}
+}
+
+void APlayerCharacter::HitReaction(const AActor* Attacker) {
+	check(CombatComponent)
+	if (UAnimMontage* HitReactAnimMontage = CombatComponent->GetMainWeapon()->GetHitReactMontage(Attacker)) {
+		PlayAnimMontage(HitReactAnimMontage);
+	}
+}
+
+void APlayerCharacter::OnDeath() {
+	if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent()) {
+		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	// Ragdoll
+	if (USkeletalMeshComponent* MeshComp = GetMesh()) {
+		MeshComp->SetCollisionProfileName("Ragdoll");
+		MeshComp->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+		MeshComp->SetSimulatePhysics(true);
 	}
 }
 
@@ -303,6 +372,7 @@ bool APlayerCharacter::CanPerformAttack(const FGameplayTag& AttackWeaponTag) con
 	FGameplayTagContainer CheckTags;
 	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
 	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Hit);
 
 	const float StaminaCost = CombatComponent->GetMainWeapon()->GetStaminaCost(AttackWeaponTag);
 	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false

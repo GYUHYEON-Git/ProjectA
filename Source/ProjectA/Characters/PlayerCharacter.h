@@ -103,6 +103,13 @@ protected:
 	TSubclassOf<AFistWeapon> FistWeaponClass;
 
 protected:
+	UPROPERTY(EditAnywhere, Category = "Effect")
+	TObjectPtr<USoundCue> ImpactSound;
+
+	UPROPERTY(EditAnywhere, Category = "Effect")
+	TObjectPtr<UParticleSystem> ImpactParticle;
+
+protected:
 	UPROPERTY(VisibleAnywhere, Category = "Movement Data")
 	float NormalSpeed = 500.f;
 
@@ -138,16 +145,22 @@ public:
 
 	virtual void NotifyControllerChanged() override;
 
-	void Move(const FInputActionValue& Values);
-
-	void Look(const FInputActionValue& Values);
-
+public:
 	FORCEINLINE UStateComponent* GetStateComponent() const { return StateComponent; }
+	
+	virtual float TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	void ImpactEffect(const FVector& Location);
+	void HitReaction(const AActor* Attacker);
+	void OnDeath();
 
 protected:
 	bool IsMoving() const;
 	bool CanToggleCombat() const;
 	FORCEINLINE bool IsSprinting() const { return bSprinting; }
+
+	void Move(const FInputActionValue& Values);
+
+	void Look(const FInputActionValue& Values);
 
 	void Sprinting();
 

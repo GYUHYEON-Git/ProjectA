@@ -10,6 +10,7 @@
 #include "Components/CombatComponent.h"
 #include "Components/WeaponCollisionComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 AWeapon::AWeapon() {
 	WeaponCollision = CreateDefaultSubobject<UWeaponCollisionComponent>("MainCollision");
@@ -36,7 +37,8 @@ void AWeapon::EquipItem() {
 		const FName AttackSocket = CombatComponent->IsCombatEnabled() ? EquipSocketName : UnequipSocketName;
 		AttachToOwner(AttackSocket);
 		WeaponCollision->SetWeaponMesh(Mesh);
-		if (APlayerCharacter* OwnerCharacter = Cast<APlayerCharacter>(GetOwner())) {
+		if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner())) {
+			UAnimInstance* BaseAnim = OwnerCharacter->GetMesh()->GetAnimInstance();
 			if (UMyAnimInstance* Anim = Cast<UMyAnimInstance>(OwnerCharacter->GetMesh()->GetAnimInstance())) {
 				Anim->UpdateCombatMode(CombatType);
 			}
@@ -54,6 +56,57 @@ float AWeapon::GetStaminaCost(const FGameplayTag& InTag) const {
 
 UAnimMontage* AWeapon::GetMontageForTag(const FGameplayTag& Tag, const int32 Index) const {
 	return MontageActionData->GetMontageForTag(Tag, Index);
+}
+
+UAnimMontage* AWeapon::GetRandomMontageForTag(const FGameplayTag& Tag) const {
+	return MontageActionData->GetRandomMontageForTag(Tag);
+}
+
+UAnimMontage* AWeapon::GetHitReactMontage(const AActor* Attacker) const {
+	// LookAt 회전값을 구합니다. (현재 Actor가 공격자를 바라보는 회전값)
+	const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetOwner()->GetActorLocation(), Attacker->GetActorLocation());
+	// 현재 Actor의 회전값과 LookAt 회전값의 차이를 구합니다.
+	const FRotator DeltaRotation = UKismetMathLibrary::NormalizedDeltaRotator(GetOwner()->GetActorRotation(), LookAtRotation);
+	// Z축 기준의 회전값 차이만을 취합니다.
+	const float DeltaZ = DeltaRotation.Yaw;
+
+	EHitDirection HitDirection = EHitDirection::Front;
+
+	if (UKismetMathLibrary::InRange_FloatFloat(DeltaZ, -45.f, 45.f)) {
+		HitDirection = EHitDirection::Front;
+		UE_LOG(LogTemp, Log, TEXT("Front"));
+	}
+	else if (UKismetMathLibrary::InRange_FloatFloat(DeltaZ, 45.f, 135.f)) {
+		HitDirection = EHitDirection::Left;
+		UE_LOG(LogTemp, Log, TEXT("Left"));
+	}
+	else if (UKismetMathLibrary::InRange_FloatFloat(DeltaZ, 135.f, 180.f)
+		|| UKismetMathLibrary::InRange_FloatFloat(DeltaZ, -180.f, -135.f)) {
+		HitDirection = EHitDirection::Back;
+		UE_LOG(LogTemp, Log, TEXT("Back"));
+	}
+	else if (UKismetMathLibrary::InRange_FloatFloat(DeltaZ, -135.f, -45.f)) {
+		HitDirection = EHitDirection::Right;
+		UE_LOG(LogTemp, Log, TEXT("Right"));
+	}
+
+	UAnimMontage* SelectedMontage = nullptr;
+	switch (HitDirection) {
+	case EHitDirection::Front:
+		SelectedMontage = GetMontageForTag(MyGameplayTags::Character_Action_HitReaction, 0);
+		break;
+	case EHitDirection::Back:
+		SelectedMontage = GetMontageForTag(MyGameplayTags::Character_Action_HitReaction, 1);
+		break;
+	case EHitDirection::Left:
+		SelectedMontage = GetMontageForTag(MyGameplayTags::Character_Action_HitReaction, 2);
+		break;
+	case EHitDirection::Right:
+		SelectedMontage = GetMontageForTag(MyGameplayTags::Character_Action_HitReaction, 3);
+		break;
+	}
+
+	return SelectedMontage;
 }
 
 bool AWeapon::HasValidMontage(const FGameplayTag& Tag) const {

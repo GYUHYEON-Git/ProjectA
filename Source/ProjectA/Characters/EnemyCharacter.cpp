@@ -10,10 +10,13 @@
 #include "Components/StateComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Components/CombatComponent.h"
+#include "Equipments/Weapon.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Sound/SoundCue.h"
+#include "PlayerCharacter.h"
 
 AEnemyCharacter::AEnemyCharacter()
 {
@@ -38,17 +41,26 @@ AEnemyCharacter::AEnemyCharacter()
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
 	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("Attribute"));
-	StateComponent = CreateDefaultSubobject<UStateComponent>("State");
+	StateComponent = CreateDefaultSubobject<UStateComponent>(TEXT("State"));
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
 
 	// Bind to OnDeath Delegate
 	AttributeComponent->OnDeath.AddUObject(this, &ThisClass::OnDeath);
 
 }
 
-void AEnemyCharacter::BeginPlay()
-{
+void AEnemyCharacter::BeginPlay() {
 	Super::BeginPlay();
-	
+
+	// ¹«±â ÀåÂø.
+	if (DefaultWeaponClass) {
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		
+		AWeapon* Weapon = GetWorld()->SpawnActor<AWeapon>(DefaultWeaponClass, GetActorTransform(), Params);
+		CombatComponent->SetCombatEnabled(true);
+		Weapon->EquipItem();
+	}
 }
 
 void AEnemyCharacter::Tick(float DeltaTime)
@@ -58,7 +70,7 @@ void AEnemyCharacter::Tick(float DeltaTime)
 }
 
 float AEnemyCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) {
-	float  ActualDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	float ActualDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 
 	if (AttributeComponent) {
 		AttributeComponent->TakeDamageAmount(ActualDamage);
@@ -116,56 +128,10 @@ void AEnemyCharacter::ImpactEffect(const FVector& Location) {
 }
 
 void AEnemyCharacter::HitReaction(const AActor* Attacker) {
-	if (UAnimMontage* HitReactAnimMontage = GetHitReactAnimation(Attacker)) {
-		float DelaySeconds = PlayAnimMontage(HitReactAnimMontage);
+	check(CombatComponent)
+	if (UAnimMontage* HitReactAnimMontage = CombatComponent->GetMainWeapon()->GetHitReactMontage(Attacker)) {
+		PlayAnimMontage(HitReactAnimMontage);
 	}
-}
-
-UAnimMontage* AEnemyCharacter::GetHitReactAnimation(const AActor* Attacker) const {
-	// Calculate the LookAt rotation (the rotation required for this actor to face the attacker)
-	const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Attacker->GetActorLocation());
-	// Calculate the difference between the current actor rotation and the LookAt rotation
-	const FRotator DeltaRotation = UKismetMathLibrary::NormalizedDeltaRotator(GetActorRotation(), LookAtRotation);
-	// Use only the rotation difference around the Z axis
-	const float DeltaZ = DeltaRotation.Yaw;
-
-	EHitDirection HitDirection = EHitDirection::Front;
-
-	if (UKismetMathLibrary::InRange_FloatFloat(DeltaZ, -45.f, 45.f)) {
-		HitDirection = EHitDirection::Front;
-		UE_LOG(LogTemp, Log, TEXT("Front"));
-	}
-	else if (UKismetMathLibrary::InRange_FloatFloat(DeltaZ, 45.f, 135.f)) {
-		HitDirection = EHitDirection::Left;
-		UE_LOG(LogTemp, Log, TEXT("Left"));
-	}
-	else if (UKismetMathLibrary::InRange_FloatFloat(DeltaZ, 135.f, 180.f)
-		|| UKismetMathLibrary::InRange_FloatFloat(DeltaZ, -180.f, -135.f)) {
-		HitDirection = EHitDirection::Back;
-		UE_LOG(LogTemp, Log, TEXT("Back"));
-	}
-	else if (UKismetMathLibrary::InRange_FloatFloat(DeltaZ, -135.f, -45.f)) {
-		HitDirection = EHitDirection::Right;
-		UE_LOG(LogTemp, Log, TEXT("Right"));
-	}
-
-	UAnimMontage* SelectedMontage = nullptr;
-	switch (HitDirection) {
-	case EHitDirection::Front:
-		SelectedMontage = HitReactAnimFront;
-		break;
-	case EHitDirection::Back:
-		SelectedMontage = HitReactAnimBack;
-		break;
-	case EHitDirection::Left:
-		SelectedMontage = HitReactAnimLeft;
-		break;
-	case EHitDirection::Right:
-		SelectedMontage = HitReactAnimRight;
-		break;
-	}
-
-	return SelectedMontage;
 }
 
 void AEnemyCharacter::OnTargeted(bool bTargeted) {
@@ -181,5 +147,38 @@ bool AEnemyCharacter::CanBeTargeted() {
 	FGameplayTagContainer TagCheck;
 	TagCheck.AddTag(MyGameplayTags::Character_State_Death);
 	return StateComponent->IsCrrentStateEqualToAny(TagCheck) == false;
+}
+
+void AEnemyCharacter::ActivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) {
+	if (CombatComponent) {
+		CombatComponent->GetMainWeapon()->ActivateCollision(WeaponCollisionType);
+	}
+}
+
+void AEnemyCharacter::DeactivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) {
+	if (CombatComponent) {
+		CombatComponent->GetMainWeapon()->DeactivateCollision(WeaponCollisionType);
+	}
+}
+
+void AEnemyCharacter::PerformAttack(FGameplayTag& AttackTypeTag, FOnMontageEnded& MontageEndedDelegate) {
+	check(StateComponent)
+	check(AttributeComponent)
+	check(CombatComponent)
+
+	if (const AWeapon* Weapon = CombatComponent->GetMainWeapon()) {
+		StateComponent->SetState(MyGameplayTags::Character_State_Attacking);
+		CombatComponent->SetLastAttackType(AttackTypeTag);
+		AttributeComponent->ToggleStaminaRegeneration(false);
+		if (UAnimMontage* Montage = Weapon->GetRandomMontageForTag(AttackTypeTag)) {
+			if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance()) {
+				AnimInstance->Montage_Play(Montage);
+				AnimInstance->Montage_SetEndDelegate(MontageEndedDelegate, Montage);
+			}
+		}
+		const float StaminaCost = Weapon->GetStaminaCost(AttackTypeTag);
+		AttributeComponent->DecreaseStamina(StaminaCost);
+		AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
+	}
 }
 

@@ -3,11 +3,20 @@
 
 #include "Data/MontageActionData.h"
 
-UAnimMontage* UMontageActionData::GetMontageForTag(const FGameplayTag& GroupTag, const int32 Index) {
-	if (FMontageGroup* MontageGroup = MontageGroupMap.Find(GroupTag)) {
+UAnimMontage* UMontageActionData::GetMontageForTag(const FGameplayTag& GroupTag, const int32 Index) const {
+	if (const FMontageGroup* MontageGroup = MontageGroupMap.Find(GroupTag)) {
 		if (MontageGroup->Animations.IsValidIndex(Index)) {
 			return MontageGroup->Animations[Index];
 		}
+	}
+	return nullptr;
+}
+
+UAnimMontage* UMontageActionData::GetRandomMontageForTag(const FGameplayTag& GroupTag) const {
+	if (const FMontageGroup* MontageGroup = MontageGroupMap.Find(GroupTag)) {
+		// ·£´ý Index
+		const int32 RandomIndex = FMath::RandRange(0, MontageGroup->Animations.Num() - 1);
+		return MontageGroup->Animations[RandomIndex];
 	}
 	return nullptr;
 }

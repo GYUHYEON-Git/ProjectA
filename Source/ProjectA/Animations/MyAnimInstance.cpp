@@ -10,6 +10,7 @@
 #include "Components/StateComponent.h"
 #include "Components/CombatComponent.h"
 
+#include "Characters/EnemyCharacter.h"
 
 void UMyAnimInstance::NativeInitializeAnimation() {
 	Super::NativeInitializeAnimation();

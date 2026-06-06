@@ -69,6 +69,9 @@ public:
 	float GetAttackDamage() const;
 
 	UAnimMontage* GetMontageForTag(const FGameplayTag& Tag, const int32 Index = 0) const;
+	UAnimMontage* GetRandomMontageForTag(const FGameplayTag& Tag) const;
+	UAnimMontage* GetHitReactMontage(const AActor* Attacker) const;
+
 	bool HasValidMontage(const FGameplayTag& Tag) const;
 
 	FORCEINLINE FName GetEquipSocketName() const { return EquipSocketName; }
