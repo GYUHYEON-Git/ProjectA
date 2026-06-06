@@ -11,6 +11,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Components/CombatComponent.h"
+#include "Components/RotationComponent.h"
 #include "Equipments/Weapon.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
@@ -59,6 +60,7 @@ AEnemyCharacter::AEnemyCharacter()
 	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("Attribute"));
 	StateComponent = CreateDefaultSubobject<UStateComponent>(TEXT("State"));
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
+	RotationComponent = CreateDefaultSubobject<URotationComponent>(TEXT("RotationComponent"));
 
 	// Bind to OnDeath Delegate
 	AttributeComponent->OnDeath.AddUObject(this, &ThisClass::OnDeath);

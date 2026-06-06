@@ -13,6 +13,7 @@ class USphereComponent;
 class UAttributeComponent;
 class UStateComponent;
 class UCombatComponent;
+class URotationComponent;
 class ATargetPoint;
 class AWeapon;
 
@@ -34,6 +35,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCombatComponent> CombatComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<URotationComponent> RotationComponent;
 
 	/** LockOn UI Widget */
 	UPROPERTY(VisibleAnywhere)

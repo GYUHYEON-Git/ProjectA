@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Characters/EnemyCharacter.h"
+#include "Components/RotationComponent.h"
 
 AEnemyAIController::AEnemyAIController() {
 	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>("AIPerception");
@@ -46,5 +47,8 @@ void AEnemyAIController::UpdateTarget() const {
 void AEnemyAIController::SetTarget(AActor* NewTarget) const {
 	if (IsValid(Blackboard)) {
 		Blackboard->SetValueAsObject(FName("Target"), NewTarget);
+	}
+	if (URotationComponent* RotationComponent = ControlledEnemy->GetComponentByClass<URotationComponent>()) {
+		RotationComponent->SetTargetActor(NewTarget);
 	}
 }
