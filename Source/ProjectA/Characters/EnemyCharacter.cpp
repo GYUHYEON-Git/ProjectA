@@ -17,10 +17,18 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Sound/SoundCue.h"
 #include "PlayerCharacter.h"
+#include "UI/StatBarWidget.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Perception/AISense_Damage.h"
+#include "AIController.h"
+#include "BrainComponent.h"
 
 AEnemyCharacter::AEnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	// Create Targeting Sphere & Set Collision
 	TargetingSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("TargetingSphere"));
@@ -37,6 +45,14 @@ AEnemyCharacter::AEnemyCharacter()
 	LockOnWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
 	LockOnWidgetComponent->SetVisibility(false);
 
+	// HealthBar
+	HealthBarWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarWidgetComponent"));
+	HealthBarWidgetComponent->SetupAttachment(GetRootComponent());
+	HealthBarWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
+	HealthBarWidgetComponent->SetDrawSize(FVector2D(100.f, 5.f));
+	HealthBarWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	HealthBarWidgetComponent->SetVisibility(false);
+
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
@@ -46,7 +62,7 @@ AEnemyCharacter::AEnemyCharacter()
 
 	// Bind to OnDeath Delegate
 	AttributeComponent->OnDeath.AddUObject(this, &ThisClass::OnDeath);
-
+	AttributeComponent->OnAttributeChanged.AddUObject(this, &ThisClass::OnAttributeChanged);
 }
 
 void AEnemyCharacter::BeginPlay() {
@@ -61,6 +77,9 @@ void AEnemyCharacter::BeginPlay() {
 		CombatComponent->SetCombatEnabled(true);
 		Weapon->EquipItem();
 	}
+
+	// 체력바 설정
+	SetupHealthBar();
 }
 
 void AEnemyCharacter::Tick(float DeltaTime)
@@ -74,8 +93,6 @@ float AEnemyCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent,
 
 	if (AttributeComponent) {
 		AttributeComponent->TakeDamageAmount(ActualDamage);
-		GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Cyan, FString::Printf(TEXT("HP : %f"), AttributeComponent->GetBaseHealth()));
-		GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Cyan, FString::Printf(TEXT("Damaged : %f"), ActualDamage));
 	}
 
 	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID)) {
@@ -89,6 +106,9 @@ float AEnemyCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent,
 		FVector ImpactDirection = PointDamageEvent->HitInfo.ImpactNormal;
 		// HitLocation
 		FVector HitLocation = PointDamageEvent->HitInfo.Location;
+
+		// AI가 데미지를 인식할 수 있도록 알려줌.
+		UAISense_Damage::ReportDamageEvent(GetWorld(), this, EventInstigator->GetPawn(), ActualDamage, HitLocation, HitLocation);
 
 		ImpactEffect(ImpactPoint);
 
@@ -105,6 +125,10 @@ void AEnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 }
 
 void AEnemyCharacter::OnDeath() {
+	// Stop BehaviorTree
+	if (AAIController* AIController = Cast<AAIController>(GetController())) {
+		AIController->GetBrainComponent()->StopLogic(TEXT("Death"));
+	}
 	if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent()) {
 		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
@@ -114,6 +138,27 @@ void AEnemyCharacter::OnDeath() {
 		MeshComp->SetCollisionProfileName("Ragdoll");
 		MeshComp->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 		MeshComp->SetSimulatePhysics(true);
+	}
+}
+
+void AEnemyCharacter::OnAttributeChanged(EAttributeType AttributeType, float InValue) {
+	if (AttributeType == EAttributeType::Health) {
+		if (HealthBarWidgetComponent) {
+			if (const UStatBarWidget* StatBar = Cast<UStatBarWidget>(HealthBarWidgetComponent->GetWidget())) {
+				StatBar->SetRatio(InValue);
+			}
+		}
+	}
+}
+
+void AEnemyCharacter::SetupHealthBar() {
+	if (HealthBarWidgetComponent) {
+		if (UStatBarWidget* StatBar = Cast<UStatBarWidget>(HealthBarWidgetComponent->GetWidget())) {
+			StatBar->FillColorAndOpacity = FLinearColor::Red;
+		}
+	}
+	if (AttributeComponent) {
+		AttributeComponent->BroadcastAttributeChanged(EAttributeType::Health);
 	}
 }
 
@@ -179,6 +224,12 @@ void AEnemyCharacter::PerformAttack(FGameplayTag& AttackTypeTag, FOnMontageEnded
 		const float StaminaCost = Weapon->GetStaminaCost(AttackTypeTag);
 		AttributeComponent->DecreaseStamina(StaminaCost);
 		AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
+	}
+}
+
+void AEnemyCharacter::ToggleHealthBarVisibility(bool bVisibility) {
+	if (HealthBarWidgetComponent) {
+		HealthBarWidgetComponent->SetVisibility(bVisibility);
 	}
 }
 

@@ -4,6 +4,7 @@
 #include "Components/StateComponent.h"
 
 #include "Kismet/KismetSystemLibrary.h"
+#include "MyGameplayTags.h"
 
 UStateComponent::UStateComponent()
 {
@@ -50,6 +51,8 @@ void UStateComponent::ToggleMovementInput(bool bEnabled, float Duration) {
 
 void UStateComponent::MovementInputEnableAction() {
 	bMovementInputEnabled = true;
-	ClearState();
+	if (CurrentState != MyGameplayTags::Character_State_Death) {
+		ClearState();
+	}
 }
 

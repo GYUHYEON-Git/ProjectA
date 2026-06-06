@@ -33,7 +33,7 @@ protected:
 	float StaminaRegenRate = 0.5f;
 
 	UPROPERTY(EditAnywhere, Category = "Health")
-	float BaseHealth = 100.f;
+	float CurrentHealth = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Health")
 	float MaxHealth = 100.f;
@@ -54,11 +54,14 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	FORCEINLINE float GetBaseStamina() const { return CurrentStamina; }
+	FORCEINLINE float GetCurrentStamina() const { return CurrentStamina; }
 	FORCEINLINE float GetMaxStamina() const { return MaxStamina; }
-	FORCEINLINE float GetStaminaRatio() const { return CurrentStamina / MaxStamina; }
-	FORCEINLINE float GetBaseHealth() const { return BaseHealth; };
+
+	FORCEINLINE float GetCurrentHealth() const { return CurrentHealth; };
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; };
+
+	FORCEINLINE float GetStaminaRatio() const { return CurrentStamina / MaxStamina; }
+	FORCEINLINE float GetHealthRatio() const { return CurrentHealth / MaxHealth; }
 
 public:
 	bool CheckHasEnoughStamina(float StaminaCost) const;

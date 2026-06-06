@@ -156,6 +156,7 @@ public:
 protected:
 	bool IsMoving() const;
 	bool CanToggleCombat() const;
+	bool CanRolling() const;
 	FORCEINLINE bool IsSprinting() const { return bSprinting; }
 
 	void Move(const FInputActionValue& Values);

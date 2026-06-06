@@ -39,6 +39,10 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UWidgetComponent> LockOnWidgetComponent;
 
+	/** HealthBar */
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UWidgetComponent> HealthBarWidgetComponent;
+
 // Effect Section
 protected:
 	UPROPERTY(EditAnywhere, Category = "Effect")
@@ -70,8 +74,10 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-public:
+protected:
 	virtual void OnDeath();
+	void OnAttributeChanged(EAttributeType AttributeType, float InValue);
+	void SetupHealthBar();
 
 protected:
 	void ImpactEffect(const FVector& Location);
@@ -88,6 +94,9 @@ public:
 	virtual void ActivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) override;
 	virtual void DeactivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) override;
 	virtual void PerformAttack(FGameplayTag& AttackTypeTag, FOnMontageEnded& MontageEndedDelegate) override;
+
+	// 체력바 토글
+	void ToggleHealthBarVisibility(bool bVisibility);
 
 public:
 	FORCEINLINE ATargetPoint* GetPatrolPoint(){

@@ -54,25 +54,25 @@ void UAttributeComponent::BroadcastAttributeChanged(EAttributeType AttributeType
 		Ratio = GetStaminaRatio();
 		break;
 	case EAttributeType::Health:
+		Ratio = GetHealthRatio();
 		break;
 	}
 	OnAttributeChanged.Broadcast(AttributeType, Ratio);
 }
 
 void UAttributeComponent::TakeDamageAmount(float DamageAmount) {
-	BaseHealth = FMath::Clamp(BaseHealth - DamageAmount, 0.f, MaxHealth);
+	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.f, MaxHealth);
 
 	BroadcastAttributeChanged(EAttributeType::Health);
 
-	if (BaseHealth <= 0.f) {
-		// Call Death Delegate
-		if (OnDeath.IsBound()) {
-			OnDeath.Broadcast();
-		}
-
+	if (CurrentHealth <= 0.f) {
 		// Set Death State
 		if (UStateComponent* StateComp = GetOwner()->FindComponentByClass<UStateComponent>()) {
 			StateComp->SetState(MyGameplayTags::Character_State_Death);
+		}
+		// Call Death Delegate
+		if (OnDeath.IsBound()) {
+			OnDeath.Broadcast();
 		}
 	}
 }
@@ -84,4 +84,3 @@ void UAttributeComponent::RegenrateStaminaHandler() {
 		ToggleStaminaRegeneration(false);
 	}
 }
-

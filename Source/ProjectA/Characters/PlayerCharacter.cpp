@@ -117,14 +117,12 @@ void APlayerCharacter::NotifyControllerChanged() {
 float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) {
 	float ActualDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 
-	if (AttributeComponent) {
-		AttributeComponent->TakeDamageAmount(ActualDamage);
-		GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Cyan, FString::Printf(TEXT("HP : %f"), AttributeComponent->GetBaseHealth()));
-		GEngine->AddOnScreenDebugMessage(0, 3.f, FColor::Cyan, FString::Printf(TEXT("Damaged : %f"), ActualDamage));
-	}
-
 	StateComponent->SetState(MyGameplayTags::Character_State_Hit);
 	StateComponent->ToggleMovementInput(false);
+
+	if (AttributeComponent) {
+		AttributeComponent->TakeDamageAmount(ActualDamage);
+	}
 
 	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID)) {
 		const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
@@ -221,11 +219,23 @@ bool APlayerCharacter::CanToggleCombat() const {
 	CheckTags.AddTag(MyGameplayTags::Character_State_Attacking);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
 	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
+	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false;
+}
+
+bool APlayerCharacter::CanRolling() const {
+	check(StateComponent);
+
+	FGameplayTagContainer CheckTags;
+	CheckTags.AddTag(MyGameplayTags::Character_State_Attacking);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
+	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
 	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false;
 }
 
 void APlayerCharacter::Sprinting() {
-	if (AttributeComponent->GetBaseStamina() > 5.f && IsMoving()) {
+	if (AttributeComponent->GetCurrentStamina() > 5.f && IsMoving()) {
 		AttributeComponent->ToggleStaminaRegeneration(false);
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
 		AttributeComponent->DecreaseStamina(0.1f);
@@ -245,8 +255,7 @@ void APlayerCharacter::StopSprint() {
 void APlayerCharacter::Rolling() {
 	check(AttributeComponent);
 	check(StateComponent);
-	if (StateComponent->GetCurrentState() == MyGameplayTags::Character_State_Rolling) return;
-
+	if (CanRolling() == false) return;
 	if (AttributeComponent->CheckHasEnoughStamina(15.f)) {
 		AttributeComponent->ToggleStaminaRegeneration(false);
 		StateComponent->ToggleMovementInput(false);
@@ -283,7 +292,7 @@ void APlayerCharacter::Interact() {
 		ObjectTypes,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::None,
 		OutHit,
 		true);
 	if (bHit) {
@@ -373,6 +382,7 @@ bool APlayerCharacter::CanPerformAttack(const FGameplayTag& AttackWeaponTag) con
 	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
 	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Hit);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
 
 	const float StaminaCost = CombatComponent->GetMainWeapon()->GetStaminaCost(AttackWeaponTag);
 	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false

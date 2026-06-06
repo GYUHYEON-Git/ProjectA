@@ -16,6 +16,7 @@ void UPlayerHUDWidget::NativeConstruct() {
 		if (UAttributeComponent* Attribute = Pawn->GetComponentByClass<UAttributeComponent>()) {
 			Attribute->OnAttributeChanged.AddUObject(this, &ThisClass::OnAttributeChanged);
 			Attribute->BroadcastAttributeChanged(EAttributeType::Stamina);
+			Attribute->BroadcastAttributeChanged(EAttributeType::Health);
 		}
 	}
 }
@@ -26,6 +27,7 @@ void UPlayerHUDWidget::OnAttributeChanged(EAttributeType AttributeType, float In
 		StaminaBarWidget->SetRatio(InValue);
 		break;
 	case EAttributeType::Health:
+		HealthBarWidget->SetRatio(InValue);
 		break;
 	}
 }

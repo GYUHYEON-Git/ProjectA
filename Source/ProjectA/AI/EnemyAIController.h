@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "EnemyAIController.generated.h"
 
+class AEnemyCharacter;
 /**
  * 
  */
@@ -23,6 +24,9 @@ protected:
 	TObjectPtr<UAIPerceptionComponent> AIPerceptionComponent;
 
 	FTimerHandle TimerHandle;
+
+	UPROPERTY()
+	TObjectPtr<AEnemyCharacter> ControlledEnemy;
 
 public:
 	AEnemyAIController();

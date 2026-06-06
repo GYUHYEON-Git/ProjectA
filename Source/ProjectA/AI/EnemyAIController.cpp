@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
+#include "Characters/EnemyCharacter.h"
 
 AEnemyAIController::AEnemyAIController() {
 	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>("AIPerception");
@@ -14,29 +15,33 @@ AEnemyAIController::AEnemyAIController() {
 
 void AEnemyAIController::OnPossess(APawn* InPawn) {
 	Super::OnPossess(InPawn);
+	ControlledEnemy = Cast<AEnemyCharacter>(InPawn);
 	RunBehaviorTree(BehaviorTreeAsset);
 	// UpdateTarget 타이머 등록
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &ThisClass::UpdateTarget, 0.1f, true);
 }
 
 void AEnemyAIController::OnUnPossess() {
-	Super::OnUnPossess();
+	ControlledEnemy = nullptr;
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
+	Super::OnUnPossess();
 }
 
-	void AEnemyAIController::UpdateTarget() const {
-		TArray<AActor*> OutActors;
-		AIPerceptionComponent->GetKnownPerceivedActors(nullptr, OutActors);
+void AEnemyAIController::UpdateTarget() const {
+	TArray<AActor*> OutActors;
+	AIPerceptionComponent->GetKnownPerceivedActors(nullptr, OutActors);
 
-		ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
 
-		if (OutActors.Contains(PlayerCharacter)) {
-			SetTarget(PlayerCharacter);
-		}
-		else {
-			SetTarget(nullptr);
-		}
+	if (OutActors.Contains(PlayerCharacter)) {
+		SetTarget(PlayerCharacter);
+		ControlledEnemy->ToggleHealthBarVisibility(true);
 	}
+	else {
+		SetTarget(nullptr);
+		ControlledEnemy->ToggleHealthBarVisibility(false);
+	}
+}
 
 void AEnemyAIController::SetTarget(AActor* NewTarget) const {
 	if (IsValid(Blackboard)) {
