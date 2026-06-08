@@ -24,14 +24,11 @@ EBTNodeResult::Type UBTTask_PerformAttack::ExecuteTask(UBehaviorTreeComponent& O
 			if (UStateComponent* StateComponent = ControlledPawn->GetComponentByClass<UStateComponent>()) {
 				StateComponent->ClearState();
 			}
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, TEXT("Succeeded"));
 			FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 		});
 		// Attack ½ÇÇà
 		CombatInterface->PerformAttack(AttackTypeTag, MontageEndedDelegate);
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, TEXT("InProgress"));
 		return EBTNodeResult::InProgress;
 	}
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, TEXT("Failed"));
 	return EBTNodeResult::Failed;
 }

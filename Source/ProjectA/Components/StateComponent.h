@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MyGameplayTags.h"
 #include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
 #include "StateComponent.generated.h"
@@ -30,7 +31,10 @@ public:
 
 public:
 	FORCEINLINE bool MovementInputEnabled() const { return bMovementInputEnabled; }
-	FORCEINLINE void SetState(const FGameplayTag NewState) { CurrentState = NewState; }
+	FORCEINLINE void SetState(const FGameplayTag NewState) { 
+		if (CurrentState == MyGameplayTags::Character_State_Death) return;
+		CurrentState = NewState;
+	}
 	FORCEINLINE FGameplayTag GetCurrentState() const { return CurrentState; }
 
 	void ClearState();

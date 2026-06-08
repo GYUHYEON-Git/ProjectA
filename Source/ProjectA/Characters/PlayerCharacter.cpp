@@ -114,6 +114,15 @@ void APlayerCharacter::NotifyControllerChanged() {
 	}
 }
 
+bool APlayerCharacter::IsDeath() const {
+	check(StateComponent);
+	
+	FGameplayTagContainer CheckTags;
+	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
+
+	return StateComponent->IsCrrentStateEqualToAny(CheckTags);
+}
+
 float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) {
 	float ActualDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 

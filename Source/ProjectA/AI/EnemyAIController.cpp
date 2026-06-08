@@ -4,7 +4,7 @@
 #include "AI/EnemyAIController.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
-#include "GameFramework/Character.h"
+#include "Characters/PlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Characters/EnemyCharacter.h"
@@ -32,11 +32,17 @@ void AEnemyAIController::UpdateTarget() const {
 	TArray<AActor*> OutActors;
 	AIPerceptionComponent->GetKnownPerceivedActors(nullptr, OutActors);
 
-	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 
 	if (OutActors.Contains(PlayerCharacter)) {
-		SetTarget(PlayerCharacter);
-		ControlledEnemy->ToggleHealthBarVisibility(true);
+		if (!PlayerCharacter->IsDeath()) {
+			SetTarget(PlayerCharacter);
+			ControlledEnemy->ToggleHealthBarVisibility(true);
+		}
+		else {
+			SetTarget(nullptr);
+			ControlledEnemy->ToggleHealthBarVisibility(false);
+		}
 	}
 	else {
 		SetTarget(nullptr);

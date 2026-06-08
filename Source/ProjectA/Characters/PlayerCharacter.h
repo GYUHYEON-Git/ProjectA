@@ -147,6 +147,7 @@ public:
 
 public:
 	FORCEINLINE UStateComponent* GetStateComponent() const { return StateComponent; }
+	bool IsDeath() const;
 	
 	virtual float TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	void ImpactEffect(const FVector& Location);

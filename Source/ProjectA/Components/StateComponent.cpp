@@ -28,6 +28,7 @@ void UStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 }
 
 void UStateComponent::ClearState() {
+	if (CurrentState == MyGameplayTags::Character_State_Death) return;
 	CurrentState = FGameplayTag::EmptyTag;
 }
 
