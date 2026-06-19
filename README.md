@@ -6,7 +6,7 @@ Developed with Unreal Engine 5
 - **Title:** ProjectA
 - **Genre:** Action RPG / Souls-like
 - **Engine:** Unreal Engine 5 (C++ Based)
-- **Development Period:** 2026.02 ~ Present (Development in Progress)
+- **Development Period:** 2026.03 ~ Present (Development in Progress)
 
 ---
 
