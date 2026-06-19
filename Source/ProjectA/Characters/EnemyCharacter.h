@@ -14,6 +14,7 @@ class UAttributeComponent;
 class UStateComponent;
 class UCombatComponent;
 class URotationComponent;
+class UMusicComponent;
 class ATargetPoint;
 class AWeapon;
 
@@ -39,6 +40,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<URotationComponent> RotationComponent;
 
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UMusicComponent> MusicComponent;
+
 	/** LockOn UI Widget */
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UWidgetComponent> LockOnWidgetComponent;
@@ -50,7 +54,7 @@ protected:
 // Effect Section
 protected:
 	UPROPERTY(EditAnywhere, Category = "Effect")
-	TObjectPtr<USoundCue> ImpactSound;
+	TObjectPtr<USoundBase> ImpactSound;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TObjectPtr<UParticleSystem> ImpactParticle;
@@ -94,13 +98,17 @@ public:
 	// Check can be targeted
 	virtual bool CanBeTargeted() override;
 
-	// ICombatInterface 구현.
+	// ICombatInterface.
 	virtual void ActivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) override;
 	virtual void DeactivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) override;
 	virtual void PerformAttack(FGameplayTag& AttackTypeTag, FOnMontageEnded& MontageEndedDelegate) override;
 
-	// 체력바 토글
+	// Toggle health bar visibility
 	void ToggleHealthBarVisibility(bool bVisibility);
+
+public:
+	void StartMusic();
+	void StopMusic();
 
 public:
 	FORCEINLINE ATargetPoint* GetPatrolPoint(){

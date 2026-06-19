@@ -8,6 +8,7 @@
 #include "PlayerHUDWidget.generated.h"
 
 class UStatBarWidget;
+class UTextWidget;
 /**
  * 
  */
@@ -23,11 +24,24 @@ protected:
 	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
 	TObjectPtr<UStatBarWidget> HealthBarWidget;
 
+	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
+	TObjectPtr<UTextWidget> EquipmentTextWidget;
+
+	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
+	TObjectPtr<UTextWidget> InteractionTextWidget;
+
 public:
 	UPlayerHUDWidget(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	virtual void NativeConstruct() override;
 
 	void OnAttributeChanged(EAttributeType AttributeType, float InValue);
+
+public:
+	FORCEINLINE UTextWidget* GetEquipmentTextWidget() { return EquipmentTextWidget; }
+	FORCEINLINE UTextWidget* GetInteractionTextWidget() { return InteractionTextWidget; }
+
+	void SetTextBlock(const FString& EquipmentName);
 	
+	void SetTextWidgetVisiblity(bool bVisible);
 };

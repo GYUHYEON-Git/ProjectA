@@ -18,7 +18,9 @@ class UAttributeComponent;
 class UStateComponent;
 class UCombatComponent;
 class UTargetingComponent;
+class USphereComponent;
 class UPlayerHUDWidget;
+class APickupItem;
 
 UCLASS()
 class PROJECTA_API APlayerCharacter : public ACharacter, public ICombatInterface
@@ -84,10 +86,13 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UTargetingComponent> TargetingComponent;
 
+	// Item Overlap
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USphereComponent> SphereComponent;
+
 protected:
-	// Montage
-	UPROPERTY(EditAnywhere, Category = "Montage")
-	TObjectPtr<UAnimMontage> RollingMontage;
+	UPROPERTY()
+	TArray<TObjectPtr<APickupItem>> InteractableItems;
 
 protected:
 	// UI
@@ -104,16 +109,16 @@ protected:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Effect")
-	TObjectPtr<USoundCue> ImpactSound;
+	TObjectPtr<USoundBase> ImpactSound;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TObjectPtr<UParticleSystem> ImpactParticle;
 
 protected:
-	UPROPERTY(VisibleAnywhere, Category = "Movement Data")
+	UPROPERTY(EditAnywhere, Category = "Movement Data")
 	float NormalSpeed = 500.f;
 
-	UPROPERTY(VisibleAnywhere, Category = "Movement Data")
+	UPROPERTY(EditAnywhere, Category = "Movement Data")
 	float SprintSpeed = 1000.f;
 
 	UPROPERTY(VisibleAnywhere, Category = "Sprinting")
@@ -131,6 +136,10 @@ protected:
 	bool bSavedComboInput = false;
 	/* Timer handle used to reset the combo. */
 	FTimerHandle ComboResetTimerHandle;
+
+protected:
+	/* Whether invincibility frames are enabled */
+	bool bEnabledIFrames = false;
 
 public:
 	APlayerCharacter();
@@ -159,6 +168,7 @@ protected:
 	bool CanToggleCombat() const;
 	bool CanRolling() const;
 	FORCEINLINE bool IsSprinting() const { return bSprinting; }
+	FORCEINLINE bool CanReceiveDamage() const { return !bEnabledIFrames; }
 
 	void Move(const FInputActionValue& Values);
 
@@ -203,6 +213,14 @@ public:
 public:
 	virtual void ActivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) override;
 	virtual void DeactivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) override;
+	virtual void ToggleIFrames(const bool bEnabled) override;
 
+public:
+	UFUNCTION()
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+		
+	UFUNCTION()
+	void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	AActor* GetClosestItem();
 
 };

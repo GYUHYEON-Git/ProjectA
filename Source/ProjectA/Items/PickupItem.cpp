@@ -1,10 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Items/PickupItem.h"
 
 #include "Define.h"
 #include "Equipments/Equipment.h"
+#include "Characters/PlayerCharacter.h"
+#include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
+#include "UI/TextWidget.h"
 
 APickupItem::APickupItem()
 {
@@ -20,13 +24,11 @@ APickupItem::APickupItem()
 void APickupItem::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void APickupItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void APickupItem::OnConstruction(const FTransform& Transform) {
@@ -48,3 +50,4 @@ void APickupItem::Interact(AActor* InteractorActor) {
 		Destroy();
 	}
 }
+

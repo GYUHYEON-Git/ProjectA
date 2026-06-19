@@ -8,6 +8,8 @@
 #include "PickupItem.generated.h"
 
 class AEquipment;
+class USphereComponent;
+class UWidgetComponent;
 
 UCLASS()
 class PROJECTA_API APickupItem : public AActor, public IInteract
@@ -20,6 +22,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	TSubclassOf<AEquipment> EquipmentClass;
+
+	UPROPERTY(EditAnywhere)
+	FString ItemName;
 
 public:	
 	APickupItem();
@@ -34,5 +39,8 @@ public:
 public:
 	FORCEINLINE void SetEquipmentClass(const TSubclassOf<AEquipment>& NewEquipmentClass) { EquipmentClass = NewEquipmentClass; }
 	virtual void Interact(AActor* InteractorActor) override;
+
+	FORCEINLINE FString GetItemName() { return ItemName; }
+	FORCEINLINE void SetItenName(FString _ItemName) { ItemName = _ItemName; }
 
 };

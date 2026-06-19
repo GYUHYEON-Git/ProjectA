@@ -21,6 +21,8 @@ Developed with Unreal Engine 5
   - Developed a precise weapon hit-detection framework using optimized line-tracing/sweeping sweeps during attack animation windows. Features real-time debug visualizers for accurate hitbox validation.
 - **Camera-Interpolated Lock-On System**
   - Created a smooth target-locking mechanic that dynamically finds the optimal enemy target and interpolates the camera's rotation using strict math logic, while supporting quick target-switching capabilities.
+- **Behavior Tree-Based Enemy AI System**
+  - Implemented a context-aware enemy AI framework using Behavior Trees and Blackboards. The AI analyzes surrounding conditions in real time and autonomously transitions between patrol, pursuit, combat, and idle states, selecting context-appropriate actions based on target distance, perception, and combat situations.
 
 ---
 

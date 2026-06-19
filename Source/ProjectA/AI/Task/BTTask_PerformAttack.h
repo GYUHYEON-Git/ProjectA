@@ -18,6 +18,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag AttackTypeTag;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FBlackboardKeySelector BlackboardbIsAttacking;
+
 public:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	

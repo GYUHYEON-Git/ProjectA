@@ -14,7 +14,7 @@ UAnimMontage* UMontageActionData::GetMontageForTag(const FGameplayTag& GroupTag,
 
 UAnimMontage* UMontageActionData::GetRandomMontageForTag(const FGameplayTag& GroupTag) const {
 	if (const FMontageGroup* MontageGroup = MontageGroupMap.Find(GroupTag)) {
-		// ·£´ý Index
+		// Random index
 		const int32 RandomIndex = FMath::RandRange(0, MontageGroup->Animations.Num() - 1);
 		return MontageGroup->Animations[RandomIndex];
 	}

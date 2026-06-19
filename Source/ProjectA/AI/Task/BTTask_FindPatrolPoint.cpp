@@ -14,7 +14,7 @@ EBTNodeResult::Type UBTTask_FindPatrolPoint::ExecuteTask(UBehaviorTreeComponent&
 		return EBTNodeResult::Failed;
 	}
 	if (AEnemyCharacter* Character = Cast<AEnemyCharacter>(ControlledPawn)) {
-		// TargetPoint의 Location을 Blackboard에 저장
+		// Store the TargetPoint's location in the Blackboard
 		OwnerComp.GetBlackboardComponent()->SetValueAsVector(BlackboardLocation.SelectedKeyName, Character->GetPatrolPoint()->GetActorLocation());
 		Character->IncrementPatrolIndex();
 		return EBTNodeResult::Succeeded;

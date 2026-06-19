@@ -14,6 +14,7 @@ namespace MyGameplayTags {
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Action_Equip);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Action_Unequip);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Action_HitReaction);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Action_Rolling);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Attack_Light);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Attack_Heavy);

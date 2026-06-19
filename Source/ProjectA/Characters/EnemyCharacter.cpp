@@ -12,11 +12,12 @@
 #include "Components/WidgetComponent.h"
 #include "Components/CombatComponent.h"
 #include "Components/RotationComponent.h"
+#include "Components/MusicComponent.h"
 #include "Equipments/Weapon.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Sound/SoundCue.h"
+#include "Sound/SoundBase.h"
 #include "PlayerCharacter.h"
 #include "UI/StatBarWidget.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -41,7 +42,7 @@ AEnemyCharacter::AEnemyCharacter()
 	// LockOn Widget
 	LockOnWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnWidgetComponent"));
 	LockOnWidgetComponent->SetupAttachment(GetRootComponent());
-	LockOnWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
+	LockOnWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 150.f));
 	LockOnWidgetComponent->SetDrawSize(FVector2D(30.f, 30.f));
 	LockOnWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
 	LockOnWidgetComponent->SetVisibility(false);
@@ -60,7 +61,8 @@ AEnemyCharacter::AEnemyCharacter()
 	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("Attribute"));
 	StateComponent = CreateDefaultSubobject<UStateComponent>(TEXT("State"));
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
-	RotationComponent = CreateDefaultSubobject<URotationComponent>(TEXT("RotationComponent"));
+	RotationComponent = CreateDefaultSubobject<URotationComponent>(TEXT("Rotation"));
+	MusicComponent = CreateDefaultSubobject<UMusicComponent>(TEXT("Music"));
 
 	// Bind to OnDeath Delegate
 	AttributeComponent->OnDeath.AddUObject(this, &ThisClass::OnDeath);
@@ -70,7 +72,7 @@ AEnemyCharacter::AEnemyCharacter()
 void AEnemyCharacter::BeginPlay() {
 	Super::BeginPlay();
 
-	// 무기 장착.
+	// Equip weapon.
 	if (DefaultWeaponClass) {
 		FActorSpawnParameters Params;
 		Params.Owner = this;
@@ -80,7 +82,7 @@ void AEnemyCharacter::BeginPlay() {
 		Weapon->EquipItem();
 	}
 
-	// 체력바 설정
+	// Set up the health bar
 	SetupHealthBar();
 }
 
@@ -109,7 +111,7 @@ float AEnemyCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent,
 		// HitLocation
 		FVector HitLocation = PointDamageEvent->HitInfo.Location;
 
-		// AI가 데미지를 인식할 수 있도록 알려줌.
+		// Notify the AI so that it can perceive the damage.
 		UAISense_Damage::ReportDamageEvent(GetWorld(), this, EventInstigator->GetPawn(), ActualDamage, HitLocation, HitLocation);
 
 		ImpactEffect(ImpactPoint);
@@ -233,5 +235,13 @@ void AEnemyCharacter::ToggleHealthBarVisibility(bool bVisibility) {
 	if (HealthBarWidgetComponent) {
 		HealthBarWidgetComponent->SetVisibility(bVisibility);
 	}
+}
+
+void AEnemyCharacter::StartMusic() {
+	MusicComponent->StartMusic();
+}
+
+void AEnemyCharacter::StopMusic() {
+	MusicComponent->StopMusic();
 }
 

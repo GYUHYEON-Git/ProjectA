@@ -32,6 +32,7 @@ void UCombatComponent::SetWeapon(AWeapon* NewWeapon) {
 		if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner())) {
 			APickupItem* PickupItem = GetWorld()->SpawnActorDeferred<APickupItem>(APickupItem::StaticClass(), OwnerCharacter->GetActorTransform(), nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
 			PickupItem->SetEquipmentClass(MainWeapon->GetClass());
+			PickupItem->SetItenName(MainWeapon->GetEquipmentName());
 			PickupItem->FinishSpawning(GetOwner()->GetActorTransform());
 			MainWeapon->Destroy();
 		}

@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Equipment.generated.h"
 
+
 UCLASS()
 class PROJECTA_API AEquipment : public AActor
 {
@@ -17,7 +18,10 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "Equipment | Mesh")
 	TObjectPtr<UStaticMeshComponent> Mesh;
-	
+
+	UPROPERTY(EditAnywhere)
+	FString EquipmentName;
+
 public:	
 	AEquipment();
 
@@ -28,6 +32,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void OnConstruction(const FTransform& Transform) override;
+
+	FORCEINLINE FString GetEquipmentName() { return EquipmentName; }
 
 public:
 	virtual void EquipItem();

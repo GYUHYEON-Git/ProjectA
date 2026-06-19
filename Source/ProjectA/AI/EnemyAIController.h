@@ -19,7 +19,7 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
 
-	/* AI가 주변환경을 인식할 수 있게 해주는 컴포넌트 */
+	/* Component that allows the AI to perceive its surroundings */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UAIPerceptionComponent> AIPerceptionComponent;
 

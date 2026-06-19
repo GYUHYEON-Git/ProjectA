@@ -40,7 +40,6 @@ void UTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	if (ITargeting* Targeting = Cast<ITargeting>(LockedTargetActor)) {
 		// Stop LockedOn if the target moves beyond TargetingRadius
 		if (Targeting->CanBeTargeted() == false || Distance > TargetingRadius + 50.f) {
-			GEngine->AddOnScreenDebugMessage(0, 1.5f, FColor::Cyan, FString::Printf(TEXT("StopLockOn")));
 			StopLockOn();
 		}
 		else {

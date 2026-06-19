@@ -11,32 +11,24 @@ UBTService_SelectBehavior::UBTService_SelectBehavior() {
 	INIT_SERVICE_NODE_NOTIFY_FLAGS();
 }
 
-void UBTService_SelectBehavior::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) {
-	Super::OnBecomeRelevant(OwnerComp, NodeMemory);
-
-	APawn* ControlledPawn = OwnerComp.GetAIOwner()->GetPawn();
-	if (!ControlledPawn) return;
-	ControlledEnemy = Cast<AEnemyCharacter>(ControlledPawn);
-}
-
 void UBTService_SelectBehavior::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
-	UpdateBehavior(OwnerComp.GetBlackboardComponent());
+	UpdateBehavior(OwnerComp, OwnerComp.GetBlackboardComponent());
 }
 
 void UBTService_SelectBehavior::SetBehaviorKey(UBlackboardComponent* BlackboardComp, EAIBehavior Behavior) const {
 	BlackboardComp->SetValueAsEnum(BehaviorKey.SelectedKeyName, static_cast<uint8>(Behavior));
 }
 
-void UBTService_SelectBehavior::UpdateBehavior(UBlackboardComponent* BlackboardComp) const {
-	check(BlackboardComp)
-	check(ControlledEnemy)
-
+void UBTService_SelectBehavior::UpdateBehavior(UBehaviorTreeComponent& OwnerComp, UBlackboardComponent* BlackboardComp) const {
+	check(BlackboardComp);
+	AEnemyCharacter* ControlledPawn = Cast<AEnemyCharacter>(OwnerComp.GetAIOwner()->GetPawn());
+	if (!ControlledPawn) return;
 	AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TargetKey.SelectedKeyName));
+	// Check if target exists
 	if (IsValid(TargetActor)) {
-		const float Distance = TargetActor->GetDistanceTo(ControlledEnemy.Get());
-
-		// 공격범위 안쪽이면
+		const float Distance = TargetActor->GetDistanceTo(ControlledPawn);
+		// Check if within attack range
 		if (Distance <= AttackRangeDistance) {
 			SetBehaviorKey(BlackboardComp, EAIBehavior::MeleeAttack);
 		}
@@ -45,8 +37,8 @@ void UBTService_SelectBehavior::UpdateBehavior(UBlackboardComponent* BlackboardC
 		}
 	}
 	else {
-		// Patrol point 있으면
-		if (ControlledEnemy->GetPatrolPoint() != nullptr) {
+		// Check if patrol point is available
+		if (ControlledPawn->GetPatrolPoint() != nullptr) {
 			SetBehaviorKey(BlackboardComp, EAIBehavior::Patrol);
 		}
 		else {

@@ -17,9 +17,6 @@ class PROJECTA_API UBTService_SelectBehavior : public UBTService
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY()
-	TObjectPtr<AEnemyCharacter> ControlledEnemy;
-
 	UPROPERTY(EditAnywhere)
 	FBlackboardKeySelector TargetKey;
 
@@ -33,12 +30,11 @@ public:
 	UBTService_SelectBehavior();
 
 protected:
-	virtual void OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
 private:
 	void SetBehaviorKey(UBlackboardComponent* BlackboardComp, EAIBehavior Behavior) const;
-	void UpdateBehavior(UBlackboardComponent* BlackboardComp) const;
+	void UpdateBehavior(UBehaviorTreeComponent& OwnerComp, UBlackboardComponent* BlackboardComp) const;
 
 	
 };

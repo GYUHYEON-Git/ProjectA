@@ -63,11 +63,11 @@ UAnimMontage* AWeapon::GetRandomMontageForTag(const FGameplayTag& Tag) const {
 }
 
 UAnimMontage* AWeapon::GetHitReactMontage(const AActor* Attacker) const {
-	// LookAt 회전값을 구합니다. (현재 Actor가 공격자를 바라보는 회전값)
+	// Calculate the LookAt rotation (rotation that makes the current actor face the attacker)
 	const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetOwner()->GetActorLocation(), Attacker->GetActorLocation());
-	// 현재 Actor의 회전값과 LookAt 회전값의 차이를 구합니다.
+	// Calculate the difference between the current actor's rotation and the LookAt rotation
 	const FRotator DeltaRotation = UKismetMathLibrary::NormalizedDeltaRotator(GetOwner()->GetActorRotation(), LookAtRotation);
-	// Z축 기준의 회전값 차이만을 취합니다.
+	// Use only the rotation difference around the Z-axis
 	const float DeltaZ = DeltaRotation.Yaw;
 
 	EHitDirection HitDirection = EHitDirection::Front;

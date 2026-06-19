@@ -9,6 +9,8 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Characters/EnemyCharacter.h"
 #include "Components/RotationComponent.h"
+#include "Components/MusicComponent.h"
+#include "Components/StateComponent.h"
 
 AEnemyAIController::AEnemyAIController() {
 	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>("AIPerception");
@@ -18,7 +20,7 @@ void AEnemyAIController::OnPossess(APawn* InPawn) {
 	Super::OnPossess(InPawn);
 	ControlledEnemy = Cast<AEnemyCharacter>(InPawn);
 	RunBehaviorTree(BehaviorTreeAsset);
-	// UpdateTarget 타이머 등록
+	// Register UpdateTarget timer
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &ThisClass::UpdateTarget, 0.1f, true);
 }
 
@@ -33,20 +35,33 @@ void AEnemyAIController::UpdateTarget() const {
 	AIPerceptionComponent->GetKnownPerceivedActors(nullptr, OutActors);
 
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	UMusicComponent* MusicComponent = ControlledEnemy->GetComponentByClass<UMusicComponent>();
+	UStateComponent* StateComponent = ControlledEnemy->GetComponentByClass<UStateComponent>();
+
+	if (!MusicComponent) return;
+
+	if (StateComponent->GetCurrentState() == MyGameplayTags::Character_State_Death) {
+		SetTarget(nullptr);
+		ControlledEnemy->ToggleHealthBarVisibility(false);
+		MusicComponent->StopMusic();
+	}
 
 	if (OutActors.Contains(PlayerCharacter)) {
 		if (!PlayerCharacter->IsDeath()) {
 			SetTarget(PlayerCharacter);
 			ControlledEnemy->ToggleHealthBarVisibility(true);
+			MusicComponent->StartMusic();
 		}
 		else {
 			SetTarget(nullptr);
 			ControlledEnemy->ToggleHealthBarVisibility(false);
+			MusicComponent->StopMusic();
 		}
 	}
 	else {
 		SetTarget(nullptr);
 		ControlledEnemy->ToggleHealthBarVisibility(false);
+		MusicComponent->StopMusic();
 	}
 }
 

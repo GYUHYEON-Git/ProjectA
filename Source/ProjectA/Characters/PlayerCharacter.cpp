@@ -14,6 +14,7 @@
 #include "Components/CombatComponent.h"
 #include "Components/TargetingComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "UI/PlayerHUDWidget.h"
 #include "MyGameplayTags.h"
 #include "Interfaces/Interact.h"
@@ -21,7 +22,8 @@
 #include "Equipments/FistWeapon.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
-#include "Sound/SoundCue.h"
+#include "Sound/SoundBase.h"
+#include "Items/PickupItem.h"
 
 
 APlayerCharacter::APlayerCharacter() {
@@ -47,6 +49,13 @@ APlayerCharacter::APlayerCharacter() {
 	Camera->SetupAttachment(SpringArm);
 	Camera->bUsePawnControlRotation = false;
 
+	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
+	SphereComponent->SetupAttachment(RootComponent);
+	SphereComponent->SetSphereRadius(300.f);
+	SphereComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	SphereComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	SphereComponent->SetCollisionResponseToChannel(COLLISION_OBJECT_INTERACTION, ECR_Overlap);
+
 	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("Attribute"));
 	StateComponent = CreateDefaultSubobject<UStateComponent>(TEXT("State"));
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
@@ -71,11 +80,17 @@ void APlayerCharacter::BeginPlay() {
 		AFistWeapon* FistWeapon = GetWorld()->SpawnActor<AFistWeapon>(FistWeaponClass, GetActorTransform(), SpawnParams);
 		FistWeapon->EquipItem();
 	}
+
+	SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnOverlapBegin);
+	SphereComponent->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnOverlapEnd);
 }
 
 void APlayerCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
-
+	if (InteractableItems.Num() > 1) {
+		GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Cyan, TEXT("Two"));
+		GetClosestItem();
+	}
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
@@ -125,6 +140,11 @@ bool APlayerCharacter::IsDeath() const {
 
 float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) {
 	float ActualDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+
+	if (!CanReceiveDamage()) {
+		UE_LOG(LogTemp, Warning, TEXT("Rolling IFrames"));
+		return ActualDamage;
+	}
 
 	StateComponent->SetState(MyGameplayTags::Character_State_Hit);
 	StateComponent->ToggleMovementInput(false);
@@ -276,24 +296,29 @@ void APlayerCharacter::Rolling() {
 		else TargetRotation = InputVector.Rotation();
 		SetActorRotation(TargetRotation);
 
-		PlayAnimMontage(RollingMontage);
-		StateComponent->SetState(MyGameplayTags::Character_State_Rolling);
-		AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
+		if (const AWeapon* Weapon = CombatComponent->GetMainWeapon()) {
+			UAnimMontage* Montage = Weapon->GetMontageForTag(MyGameplayTags::Character_Action_Rolling, 0);
+			if (!Montage) return;
+			PlayAnimMontage(Montage);
+			StateComponent->SetState(MyGameplayTags::Character_State_Rolling);
+			AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
+		}
+
 	}
 }
 
 void APlayerCharacter::Interact() {
-	FHitResult OutHit;
+	TArray<FHitResult> OutHits;
 	const FVector Start = GetActorLocation();
 	const FVector End = Start;
-	constexpr float Radius = 100.f;
+	float Radius = SphereComponent->GetScaledSphereRadius();
 
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(COLLISION_OBJECT_INTERACTION));
 
 	TArray<AActor*> ActorsToIgnore;
 
-	bool bHit = UKismetSystemLibrary::SphereTraceSingleForObjects(
+	bool bHit = UKismetSystemLibrary::SphereTraceMultiForObjects(
 		this,
 		Start,
 		End,
@@ -302,12 +327,15 @@ void APlayerCharacter::Interact() {
 		false,
 		ActorsToIgnore,
 		EDrawDebugTrace::None,
-		OutHit,
+		OutHits,
 		true);
 	if (bHit) {
-		if (AActor* HitActor = OutHit.GetActor()) {
+		for (const FHitResult& HitResult : OutHits) {
+			AActor* HitActor = HitResult.GetActor();
+			if (HitActor != GetClosestItem()) continue;
 			if (IInteract* Interaction = Cast<IInteract>(HitActor)) {
 				Interaction->Interact(this);
+				break;
 			}
 		}
 	}	
@@ -424,7 +452,6 @@ void APlayerCharacter::DoAttack(const FGameplayTag& AttackTypeTag) {
 		PlayAnimMontage(Montage);
 		const float StaminaCost = Weapon->GetStaminaCost(AttackTypeTag);
 		AttributeComponent->DecreaseStamina(StaminaCost);
-		AttributeComponent->DecreaseStamina(StaminaCost);
 		AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
 	}
 }
@@ -499,4 +526,47 @@ void APlayerCharacter::DeactivateWeaponCollision(EWeaponCollisionType WeaponColl
 	if (CombatComponent) {
 		CombatComponent->GetMainWeapon()->DeactivateCollision(WeaponCollisionType);
 	}
+}
+
+void APlayerCharacter::ToggleIFrames(const bool bEnabled) {
+	bEnabledIFrames = bEnabled;
+}
+
+void APlayerCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
+	if (APickupItem* Item = Cast<APickupItem>(OtherActor)) {
+		if (!PlayerHUDWidget) return;
+		InteractableItems.AddUnique(Item);
+		GetClosestItem();
+	}
+}
+
+void APlayerCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
+	if (APickupItem* Item = Cast<APickupItem>(OtherActor)) {
+		if (!PlayerHUDWidget) return;
+		InteractableItems.Remove(Item);
+		GetClosestItem();
+	}
+}
+
+AActor* APlayerCharacter::GetClosestItem() {
+	APickupItem* ClosestItem = nullptr;
+	float MinDist = FLT_MAX;
+	if (InteractableItems.IsEmpty()) {
+		PlayerHUDWidget->SetTextWidgetVisiblity(false);
+		return nullptr;
+	}
+	for (APickupItem* Item : InteractableItems) {
+		if (!IsValid(Item))	continue;
+		FString Name = Item->GetName();
+		float Dist = FVector::DistSquared(GetActorLocation(), Item->GetActorLocation());
+		if (Dist < MinDist) {
+			MinDist = Dist;
+			ClosestItem = Item;
+		}
+	}
+	FString CurrentInteractItem = ClosestItem->GetItemName();
+	PlayerHUDWidget->SetTextBlock(CurrentInteractItem);
+	PlayerHUDWidget->SetTextWidgetVisiblity(true);
+
+	return ClosestItem;
 }

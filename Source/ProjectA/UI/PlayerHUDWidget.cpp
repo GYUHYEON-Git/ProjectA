@@ -5,6 +5,7 @@
 
 #include "Components/AttributeComponent.h"
 #include "UI/StatBarWidget.h"
+#include "UI/TextWidget.h"
 
 UPlayerHUDWidget::UPlayerHUDWidget(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer) {
@@ -17,6 +18,7 @@ void UPlayerHUDWidget::NativeConstruct() {
 			Attribute->OnAttributeChanged.AddUObject(this, &ThisClass::OnAttributeChanged);
 			Attribute->BroadcastAttributeChanged(EAttributeType::Stamina);
 			Attribute->BroadcastAttributeChanged(EAttributeType::Health);
+			SetTextWidgetVisiblity(false);
 		}
 	}
 }
@@ -29,5 +31,20 @@ void UPlayerHUDWidget::OnAttributeChanged(EAttributeType AttributeType, float In
 	case EAttributeType::Health:
 		HealthBarWidget->SetRatio(InValue);
 		break;
+	}
+}
+
+void UPlayerHUDWidget::SetTextBlock(const FString& EquipmentName) {
+	EquipmentTextWidget->SetTextBlock(EquipmentName);
+}
+
+void UPlayerHUDWidget::SetTextWidgetVisiblity(bool bVisible) {
+	if (bVisible) {
+		EquipmentTextWidget->SetVisibility(ESlateVisibility::Visible);
+		InteractionTextWidget->SetVisibility(ESlateVisibility::Visible);
+	}
+	else {
+		EquipmentTextWidget->SetVisibility(ESlateVisibility::Hidden);
+		InteractionTextWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 }

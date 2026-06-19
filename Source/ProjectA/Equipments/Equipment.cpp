@@ -4,6 +4,8 @@
 #include "Equipments/Equipment.h"
 
 #include "GameFramework/Character.h"
+#include "Define.h"
+
 
 AEquipment::AEquipment() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -15,7 +17,6 @@ AEquipment::AEquipment() {
 void AEquipment::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void AEquipment::Tick(float DeltaTime)
