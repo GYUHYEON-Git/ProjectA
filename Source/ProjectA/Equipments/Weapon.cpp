@@ -154,7 +154,7 @@ void AWeapon::OnHitActor(const FHitResult& Hit) {
 	float AttackDamage = GetAttackDamage();
 	UGameplayStatics::ApplyPointDamage(
 		TargetActor,
-		AttackDamage,
+		AttackDamage, 
 		DamageDirection,
 		Hit,
 		GetOwner()->GetInstigatorController(),

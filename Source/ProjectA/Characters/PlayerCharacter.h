@@ -119,7 +119,10 @@ protected:
 	float NormalSpeed = 500.f;
 
 	UPROPERTY(EditAnywhere, Category = "Movement Data")
-	float SprintSpeed = 1000.f;
+	float SprintSpeed = 750.f;
+
+	UPROPERTY(EditAnywhere, Category = "Sprinting")
+	float SprintStamina = 10.f;
 
 	UPROPERTY(VisibleAnywhere, Category = "Sprinting")
 	bool bSprinting = false;

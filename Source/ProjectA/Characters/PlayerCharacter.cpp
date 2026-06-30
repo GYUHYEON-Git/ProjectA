@@ -267,7 +267,8 @@ void APlayerCharacter::Sprinting() {
 	if (AttributeComponent->GetCurrentStamina() > 5.f && IsMoving()) {
 		AttributeComponent->ToggleStaminaRegeneration(false);
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-		AttributeComponent->DecreaseStamina(0.1f);
+		float DeltaTime = GetWorld()->GetDeltaSeconds();
+		AttributeComponent->DecreaseStamina(SprintStamina * DeltaTime);
 		bSprinting = true;
 	}
 	else {
@@ -299,8 +300,8 @@ void APlayerCharacter::Rolling() {
 		if (const AWeapon* Weapon = CombatComponent->GetMainWeapon()) {
 			UAnimMontage* Montage = Weapon->GetMontageForTag(MyGameplayTags::Character_Action_Rolling, 0);
 			if (!Montage) return;
-			PlayAnimMontage(Montage);
 			StateComponent->SetState(MyGameplayTags::Character_State_Rolling);
+			PlayAnimMontage(Montage);
 			AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
 		}
 
@@ -440,7 +441,6 @@ void APlayerCharacter::DoAttack(const FGameplayTag& AttackTypeTag) {
 		StateComponent->SetState(MyGameplayTags::Character_State_Attacking);
 		StateComponent->ToggleMovementInput(false);
 		CombatComponent->SetLastAttackType(AttackTypeTag);
-
 		AttributeComponent->ToggleStaminaRegeneration(false);
 
 		UAnimMontage* Montage = Weapon->GetMontageForTag(AttackTypeTag, ComboCounter);
@@ -462,6 +462,7 @@ void APlayerCharacter::ExecuteComboAttack(const FGameplayTag& AttackTypeTag) {
 			// The animation has ended, but the combo sequence is still valid - allow additional input
 			ComboCounter++;
 			UE_LOG(LogTemp, Warning, TEXT("Additional input : Combo Counter = %d"), ComboCounter);
+			GetWorld()->GetTimerManager().ClearTimer(ComboResetTimerHandle);
 		}
 		else {
 			UE_LOG(LogTemp, Warning, TEXT(">>> ComboSequence Started <<<"));
@@ -470,7 +471,6 @@ void APlayerCharacter::ExecuteComboAttack(const FGameplayTag& AttackTypeTag) {
 
 		}
 		DoAttack(AttackTypeTag);
-		GetWorld()->GetTimerManager().ClearTimer(ComboResetTimerHandle);
 	}
 	else if (bCanComboInput) {
 		// The combo window is open - optimal timing for the next input
@@ -480,7 +480,6 @@ void APlayerCharacter::ExecuteComboAttack(const FGameplayTag& AttackTypeTag) {
 
 void APlayerCharacter::ResetCombo() {
 	UE_LOG(LogTemp, Warning, TEXT("Combo Reset"));
-
 	bComboSequenceRunning = false;
 	bCanComboInput = false;
 	bSavedComboInput = false;

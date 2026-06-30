@@ -17,7 +17,7 @@ class UWeaponCollisionComponent;
 UCLASS()
 class PROJECTA_API AWeapon : public AEquipment
 {
-	GENERATED_BODY()
+	GENERATED_BODY()	
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment | Socket")

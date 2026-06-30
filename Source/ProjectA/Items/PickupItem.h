@@ -41,6 +41,6 @@ public:
 	virtual void Interact(AActor* InteractorActor) override;
 
 	FORCEINLINE FString GetItemName() { return ItemName; }
-	FORCEINLINE void SetItenName(FString _ItemName) { ItemName = _ItemName; }
+	FORCEINLINE void SetItemName(FString _ItemName) { ItemName = _ItemName; }
 
 };
