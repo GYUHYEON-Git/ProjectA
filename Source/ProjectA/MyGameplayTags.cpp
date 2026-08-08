@@ -15,6 +15,7 @@ namespace MyGameplayTags {
 	UE_DEFINE_GAMEPLAY_TAG(Character_Action_Unequip, "Character.Action.Unequip");
 	UE_DEFINE_GAMEPLAY_TAG(Character_Action_HitReaction, "Character.Action.HitReaction");
 	UE_DEFINE_GAMEPLAY_TAG(Character_Action_Rolling, "Character.Action.Rolling");
+	UE_DEFINE_GAMEPLAY_TAG(Character_Action_BlockingHit, "Character.Action.BlockingHit");
 
 	UE_DEFINE_GAMEPLAY_TAG(Character_Attack_Light, "Character.Attack.Light");
 	UE_DEFINE_GAMEPLAY_TAG(Character_Attack_Heavy, "Character.Attack.Heavy");

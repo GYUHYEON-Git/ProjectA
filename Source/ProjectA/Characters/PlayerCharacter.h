@@ -114,9 +114,15 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TObjectPtr<USoundBase> ImpactSound;
+	
+	UPROPERTY(EditAnywhere, Category = "Effect")
+	TObjectPtr<USoundBase> BlockingSound;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TObjectPtr<UParticleSystem> ImpactParticle;
+
+	UPROPERTY(EditAnywhere, Category = "Effect")
+	TObjectPtr<UParticleSystem> BlockingParticle;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Movement Speed")
@@ -148,6 +154,10 @@ protected:
 	FTimerHandle ComboResetTimerHandle;
 
 protected:
+	/* 적과 대치중인 방향인지? */
+	bool bFacingEnemy = false;
+
+protected:
 	/* Whether invincibility frames are enabled */
 	bool bEnabledIFrames = false;
 
@@ -170,6 +180,7 @@ public:
 	
 	virtual float TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	void ImpactEffect(const FVector& Location);
+	void ShieldBlockingEffect(const FVector& Location) const;
 	void HitReaction(const AActor* Attacker);
 	void OnDeath();
 
@@ -219,6 +230,8 @@ protected:
 	void ResetCombo();
 	/* 방어 자세 가능 여부 */
 	bool CanPlayerBlockStance() const;
+	/* 방패 막기 방어가 가능한지? */
+	bool CanPerformAttackBlocking() const;
 
 public:
 	void EnableComboWindow();

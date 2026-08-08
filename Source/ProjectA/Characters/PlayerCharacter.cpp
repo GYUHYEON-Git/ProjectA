@@ -22,6 +22,7 @@
 #include "Equipments/FistWeapon.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Sound/SoundBase.h"
 #include "Items/PickupItem.h"
 #include "Animations/MyAnimInstance.h"
@@ -145,17 +146,32 @@ bool APlayerCharacter::IsDeath() const {
 float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) {
 	float ActualDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 
+	check(AttributeComponent);
+	check(StateComponent);
+
+	// 적과 대치중인 방향인지?
+	bFacingEnemy = UKismetMathLibrary::InRange_FloatFloat(GetDotProductTo(EventInstigator->GetPawn()), -0.1f, 1.f);
+
+	// 방패 방어가 가능한지?
+	if (CanPerformAttackBlocking()) {
+		AttributeComponent->TakeDamageAmount(0.f);
+		AttributeComponent->ToggleStaminaRegeneration(false);
+		// 스태미나 차감
+		AttributeComponent->DecreaseStamina(20.f);
+		StateComponent->SetState(MyGameplayTags::Character_State_Blocking);
+		AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
+	}
+	else {
+		AttributeComponent->TakeDamageAmount(ActualDamage);
+		StateComponent->SetState(MyGameplayTags::Character_State_Hit);
+	}
+
 	if (!CanReceiveDamage()) {
 		UE_LOG(LogTemp, Warning, TEXT("Rolling IFrames"));
 		return ActualDamage;
 	}
 
-	StateComponent->SetState(MyGameplayTags::Character_State_Hit);
 	StateComponent->ToggleMovementInput(false);
-
-	if (AttributeComponent) {
-		AttributeComponent->TakeDamageAmount(ActualDamage);
-	}
 
 	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID)) {
 		const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
@@ -178,19 +194,41 @@ float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent
 }
 
 void APlayerCharacter::ImpactEffect(const FVector& Location) {
-	if (ImpactSound) {
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, Location);
+	if (CanPerformAttackBlocking()) {
+		ShieldBlockingEffect(Location);
+	}
+	else {
+		if (ImpactSound) {
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, Location);
+		}
+		if (ImpactParticle) {
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticle, Location);
+		}
+	}
+}
+
+void APlayerCharacter::ShieldBlockingEffect(const FVector& Location) const {
+	if (BlockingSound) {
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), BlockingSound, Location);
 	}
 
-	if (ImpactParticle) {
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticle, Location);
+	if (BlockingParticle) {
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BlockingParticle, Location);
 	}
 }
 
 void APlayerCharacter::HitReaction(const AActor* Attacker) {
-	check(CombatComponent)
-	if (UAnimMontage* HitReactAnimMontage = CombatComponent->GetMainWeapon()->GetHitReactMontage(Attacker)) {
-		PlayAnimMontage(HitReactAnimMontage);
+	check(CombatComponent);
+
+	if (CanPerformAttackBlocking()) {
+		if (UAnimMontage* BlockingMontage = CombatComponent->GetMainWeapon()->GetMontageForTag(MyGameplayTags::Character_Action_BlockingHit)) {
+			PlayAnimMontage(BlockingMontage);
+		}
+	}
+	else {
+		if (UAnimMontage* HitReactAnimMontage = CombatComponent->GetMainWeapon()->GetHitReactMontage(Attacker)) {
+			PlayAnimMontage(HitReactAnimMontage);
+		}
 	}
 }
 
@@ -271,7 +309,7 @@ bool APlayerCharacter::CanRolling() const {
 void APlayerCharacter::Sprinting() {
 	check(AttributeComponent);
 	check(CombatComponent);
-	if (!CombatComponent->IsBlockingEnable()) {
+	if (CombatComponent->IsBlockingEnable()) {
 		return;
 	}
 
@@ -290,7 +328,7 @@ void APlayerCharacter::Sprinting() {
 void APlayerCharacter::StopSprint() {
 	check(AttributeComponent);
 	check(CombatComponent);
-	if (!CombatComponent->IsBlockingEnable()) {
+	if (CombatComponent->IsBlockingEnable()) {
 		return;
 	}
 	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
@@ -463,6 +501,7 @@ bool APlayerCharacter::CanPerformAttack(const FGameplayTag& AttackWeaponTag) con
 	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Hit);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Blocking);
 
 	const float StaminaCost = CombatComponent->GetMainWeapon()->GetStaminaCost(AttackWeaponTag);
 	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false
@@ -550,6 +589,13 @@ bool APlayerCharacter::CanPlayerBlockStance() const {
 	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false &&
 		Weapon->GetCombatType() == ECombatType::SwordShield &&
 		AttributeComponent->CheckHasEnoughStamina(1.f);
+}
+
+bool APlayerCharacter::CanPerformAttackBlocking() const {
+	check(CombatComponent);
+	check(AttributeComponent);
+
+	return bFacingEnemy && CombatComponent->IsBlockingEnable() && AttributeComponent->CheckHasEnoughStamina(20.f);
 }
 
 void APlayerCharacter::EnableComboWindow() {
