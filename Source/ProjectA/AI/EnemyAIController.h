@@ -36,7 +36,7 @@ protected:
 	virtual void OnUnPossess() override;
 
 protected:
-	void UpdateTarget() const;
+	void UpdateTarget();
 	void SetTarget(AActor* NewTarget) const;
 	
 };

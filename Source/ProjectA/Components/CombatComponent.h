@@ -8,6 +8,8 @@
 #include "CombatComponent.generated.h"
 
 class AWeapon;
+class AShield;
+class AEquipment;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FDelegateOnChangedCombat, bool)
 
@@ -23,6 +25,9 @@ public:
 protected:
 	UPROPERTY()
 	TObjectPtr<AWeapon> MainWeapon;
+
+	UPROPERTY()
+	TObjectPtr<AShield> Shield;
 
 	UPROPERTY(EditAnywhere)
 	bool bCombatEnabled = false;
@@ -41,13 +46,17 @@ public:
 
 public:
 	void SetWeapon(AWeapon* NewWeapon);
+	void SetShield(AShield* NewShield);
 
 	FORCEINLINE bool IsCombatEnabled() const { return bCombatEnabled; }
 	void SetCombatEnabled(const bool bEnabled);
 
 	FORCEINLINE AWeapon* GetMainWeapon() const { return MainWeapon; }
+	FORCEINLINE AShield* GetShield() const { return Shield; }
 
 	FORCEINLINE FGameplayTag GetLastAttackType() const { return LastAttackType; }
 	FORCEINLINE void SetLastAttackType(const FGameplayTag& NewAttackTypeTag) { LastAttackType = NewAttackTypeTag; }
-		
+	
+private:
+	void SpawnPickupItem(const AActor* OwnerActor, const TSubclassOf<AEquipment>& NewEquipmentClass, const FString NewEquipmentName) const;
 };

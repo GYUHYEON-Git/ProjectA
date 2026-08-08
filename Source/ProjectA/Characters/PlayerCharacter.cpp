@@ -200,6 +200,7 @@ void APlayerCharacter::OnDeath() {
 		MeshComp->SetCollisionProfileName("Ragdoll");
 		MeshComp->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 		MeshComp->SetSimulatePhysics(true);
+		GetCharacterMovement()->DisableMovement();
 	}
 }
 

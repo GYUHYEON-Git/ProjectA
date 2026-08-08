@@ -11,6 +11,7 @@
 #include "Components/WeaponCollisionComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Shield.h"
 
 AWeapon::AWeapon() {
 	WeaponCollision = CreateDefaultSubobject<UWeaponCollisionComponent>("MainCollision");
@@ -36,14 +37,27 @@ void AWeapon::EquipItem() {
 		CombatComponent->SetWeapon(this);
 		const FName AttackSocket = CombatComponent->IsCombatEnabled() ? EquipSocketName : UnequipSocketName;
 		AttachToOwner(AttackSocket);
+		// 무기의 충돌 트레이스 컴포넌트에 무기 메쉬 컴포넌트를 설정합니다.
 		WeaponCollision->SetWeaponMesh(Mesh);
+		// 장착한 무기의 CombatType으로 업데이트.
 		if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner())) {
 			UAnimInstance* BaseAnim = OwnerCharacter->GetMesh()->GetAnimInstance();
 			if (UMyAnimInstance* Anim = Cast<UMyAnimInstance>(OwnerCharacter->GetMesh()->GetAnimInstance())) {
 				Anim->UpdateCombatMode(CombatType);
 			}
 		}
+		// 무기를 소유한 OwnerActor를 충돌에서 무시합니다.
 		WeaponCollision->AddIgnoredActor(GetOwner());
+		// 방패를 이미 가지고 있는지 체크해서 소켓의 위치를 잡아준다.
+		if (AShield* Shield = CombatComponent->GetShield()) {
+			FName ShieldAttachSocket = Shield->GetUnequipSocketName();
+			if (CombatType == ECombatType::SwordShield) {
+				if (CombatComponent->IsCombatEnabled()) {
+					ShieldAttachSocket = Shield->GetEquipSocketName();
+				}
+			}
+			Shield->AttachToOwner(ShieldAttachSocket);
+		}
 	}
 }
 

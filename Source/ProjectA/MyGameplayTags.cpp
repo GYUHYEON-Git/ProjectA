@@ -9,6 +9,7 @@ namespace MyGameplayTags {
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_GeneralAction, "Character.State.GeneralAction");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Death, "Character.State.Death");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Hit, "Character.State.Hit");
+	UE_DEFINE_GAMEPLAY_TAG(Character_State_Blocking, "Character.State.Blocking");
 
 	UE_DEFINE_GAMEPLAY_TAG(Character_Action_Equip, "Character.Action.Equip");
 	UE_DEFINE_GAMEPLAY_TAG(Character_Action_Unequip, "Character.Action.Unequip");

@@ -69,7 +69,7 @@ void UAttributeComponent::TakeDamageAmount(float DamageAmount) {
 		// Set Death State
 		if (UStateComponent* StateComp = GetOwner()->FindComponentByClass<UStateComponent>()) {
 			StateComp->SetState(MyGameplayTags::Character_State_Death);
-		}
+		}	
 		// Call Death Delegate
 		if (OnDeath.IsBound()) {
 			OnDeath.Broadcast();

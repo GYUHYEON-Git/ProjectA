@@ -36,7 +36,7 @@ AEnemyCharacter::AEnemyCharacter()
 	TargetingSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("TargetingSphere"));
 	TargetingSphereComponent->SetupAttachment(GetRootComponent());
 	TargetingSphereComponent->SetCollisionObjectType(COLLISION_OBJECT_TARGETING);
-	TargetingSphereComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	TargetingSphereComponent->SetCollisionResponseToAllChannels(ECR_Ignore);	
 	TargetingSphereComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
 	// LockOn Widget
@@ -136,12 +136,16 @@ void AEnemyCharacter::OnDeath() {
 	if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent()) {
 		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
+	/*if (UStateComponent* StateComponent = GetComponentByClass<UStateComponent>()) {
+		StateComponent->SetState(MyGameplayTags::Character_State_Death);
+	}*/
 
 	// Ragdoll
 	if (USkeletalMeshComponent* MeshComp = GetMesh()) {
 		MeshComp->SetCollisionProfileName("Ragdoll");
 		MeshComp->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 		MeshComp->SetSimulatePhysics(true);
+		GetCharacterMovement()->DisableMovement();
 	}
 }
 

@@ -47,3 +47,9 @@ enum class EAIBehavior : uint8 {
     MeleeAttack,
     Approach,
 };
+
+UENUM(BlueprintType)
+enum class EEquipmentType : uint8 {
+    Weapon,
+    Shield,
+};

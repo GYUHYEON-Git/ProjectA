@@ -30,7 +30,7 @@ void AEnemyAIController::OnUnPossess() {
 	Super::OnUnPossess();
 }
 
-void AEnemyAIController::UpdateTarget() const {
+void AEnemyAIController::UpdateTarget() {
 	TArray<AActor*> OutActors;
 	AIPerceptionComponent->GetKnownPerceivedActors(nullptr, OutActors);
 
@@ -44,6 +44,8 @@ void AEnemyAIController::UpdateTarget() const {
 		SetTarget(nullptr);
 		ControlledEnemy->ToggleHealthBarVisibility(false);
 		MusicComponent->StopMusic();
+		GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
+		return;
 	}
 
 	if (OutActors.Contains(PlayerCharacter)) {
