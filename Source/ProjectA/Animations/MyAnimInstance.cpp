@@ -51,6 +51,10 @@ void UMyAnimInstance::UpdateCombatMode(const ECombatType InCombatType) {
 	CombatType = InCombatType;
 }
 
+void UMyAnimInstance::UpdateBlocking(bool InShouldBlocking) {
+	bShouldBlocking = InShouldBlocking;
+}
+
 void UMyAnimInstance::OnChangedCombat(const bool bInCombatEnabled) {
 	bCombatEnabled = bInCombatEnabled;
 }

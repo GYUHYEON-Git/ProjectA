@@ -24,6 +24,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 #include "Items/PickupItem.h"
+#include "Animations/MyAnimInstance.h"
 
 
 APlayerCharacter::APlayerCharacter() {
@@ -117,6 +118,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(LockOnTargetAction, ETriggerEvent::Started, this, &ThisClass::LockOnTarget);
 		EnhancedInputComponent->BindAction(LeftTargetAction, ETriggerEvent::Started, this, &ThisClass::LeftTarget);
 		EnhancedInputComponent->BindAction(RightTargetAction, ETriggerEvent::Started, this, &ThisClass::RightTarget);
+		// 방어 자세
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Started, this, &ThisClass::Blocking);
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Completed, this, &ThisClass::BlockingEnd);
 	}
 }
 
@@ -265,6 +269,12 @@ bool APlayerCharacter::CanRolling() const {
 }
 
 void APlayerCharacter::Sprinting() {
+	check(AttributeComponent);
+	check(CombatComponent);
+	if (!CombatComponent->IsBlockingEnable()) {
+		return;
+	}
+
 	if (AttributeComponent->GetCurrentStamina() > 5.f && IsMoving()) {
 		AttributeComponent->ToggleStaminaRegeneration(false);
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
@@ -278,6 +288,11 @@ void APlayerCharacter::Sprinting() {
 }
 
 void APlayerCharacter::StopSprint() {
+	check(AttributeComponent);
+	check(CombatComponent);
+	if (!CombatComponent->IsBlockingEnable()) {
+		return;
+	}
 	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
 	AttributeComponent->ToggleStaminaRegeneration(true);
 	bSprinting = false;
@@ -402,6 +417,32 @@ void APlayerCharacter::RightTarget() {
 	TargetingComponent->SwitchingLockedOnActor(ESwitchingDirection::Right);
 }
 
+void APlayerCharacter::Blocking() {
+	check(CombatComponent);
+	check(StateComponent);
+	if (CombatComponent->GetMainWeapon()) {
+		if (CanPlayerBlockStance()) {
+			GetCharacterMovement()->MaxWalkSpeed = BlockingSpeed;
+			CombatComponent->SetBlockingEnabled(true);
+			if (UMyAnimInstance* AnimInstance = Cast<UMyAnimInstance>(GetMesh()->GetAnimInstance())) {
+				AnimInstance->UpdateBlocking(true);
+				StateComponent->SetState(MyGameplayTags::Character_State_Blocking);
+			}
+		}
+	}
+}
+
+void APlayerCharacter::BlockingEnd() {
+	check(CombatComponent);
+	check(StateComponent);
+	CombatComponent->SetBlockingEnabled(false);
+	if (UMyAnimInstance* AnimInstance = Cast<UMyAnimInstance>(GetMesh()->GetAnimInstance())) {
+		AnimInstance->UpdateBlocking(false);
+		StateComponent->ClearState();
+		GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+	}
+}
+
 FGameplayTag APlayerCharacter::GetAttackPerform() const {
 	if (IsSprinting()) {
 		return MyGameplayTags::Character_Attack_Running;
@@ -485,6 +526,30 @@ void APlayerCharacter::ResetCombo() {
 	bCanComboInput = false;
 	bSavedComboInput = false;
 	ComboCounter = 0;
+}
+
+bool APlayerCharacter::CanPlayerBlockStance() const {
+	check(StateComponent);
+	check(CombatComponent);
+	check(AttributeComponent);
+
+	if (IsSprinting()) {
+		return false;
+	}
+	AWeapon* Weapon = CombatComponent->GetMainWeapon();
+	if (!IsValid(Weapon)) {
+		return false;
+	}
+	FGameplayTagContainer CheckTags;
+	CheckTags.AddTag(MyGameplayTags::Character_State_Attacking);
+	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Hit);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
+	
+	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false &&
+		Weapon->GetCombatType() == ECombatType::SwordShield &&
+		AttributeComponent->CheckHasEnoughStamina(1.f);
 }
 
 void APlayerCharacter::EnableComboWindow() {

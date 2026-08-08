@@ -71,6 +71,10 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> RightTargetAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> BlockAction;
+
+
 private:
 	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
@@ -115,16 +119,19 @@ protected:
 	TObjectPtr<UParticleSystem> ImpactParticle;
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Movement Data")
+	UPROPERTY(EditAnywhere, Category = "Movement Speed")
 	float NormalSpeed = 500.f;
 
-	UPROPERTY(EditAnywhere, Category = "Movement Data")
+	UPROPERTY(EditAnywhere, Category = "Movement Speed")
 	float SprintSpeed = 750.f;
 
-	UPROPERTY(EditAnywhere, Category = "Sprinting")
+	UPROPERTY(EditAnywhere, Category = "Movement Speed")
+	float BlockingSpeed = 250.f;
+
+	UPROPERTY(EditAnywhere, Category = "Movement Speed")
 	float SprintStamina = 10.f;
 
-	UPROPERTY(VisibleAnywhere, Category = "Sprinting")
+	UPROPERTY(VisibleAnywhere, Category = "Movement Speed")
 	bool bSprinting = false;
 
 // Combo Section
@@ -195,6 +202,9 @@ protected:
 	void LockOnTarget();
 	void LeftTarget();
 	void RightTarget();
+	/* 방어 자세 */
+	void Blocking();
+	void BlockingEnd();
 
 protected:
 	FGameplayTag GetAttackPerform() const;
@@ -207,6 +217,8 @@ protected:
 	void ExecuteComboAttack(const FGameplayTag& AttackTypeTag);
 	/* Reset the combo. */
 	void ResetCombo();
+	/* 방어 자세 가능 여부 */
+	bool CanPlayerBlockStance() const;
 
 public:
 	void EnableComboWindow();

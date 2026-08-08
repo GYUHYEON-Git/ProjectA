@@ -46,6 +46,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat Data")
 	ECombatType CombatType = ECombatType::None;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat Data")
+	bool bShouldBlocking = false;
+
 public:
 	virtual void NativeInitializeAnimation() override;
 
@@ -60,6 +63,7 @@ public:
 public:
 	// Animation
 	void UpdateCombatMode(const ECombatType InCombatType);
+	void UpdateBlocking(bool InShouldBlocking);
 
 protected:
 	// Delegate functions
