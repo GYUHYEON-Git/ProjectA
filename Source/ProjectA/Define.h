@@ -46,6 +46,7 @@ enum class EAIBehavior : uint8 {
     Patrol,
     MeleeAttack,
     Approach,
+    Stunned,
 };
 
 UENUM(BlueprintType)

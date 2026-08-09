@@ -25,7 +25,11 @@ EBTNodeResult::Type UBTTask_PerformAttack::ExecuteTask(UBehaviorTreeComponent& O
 
 			if (::IsValid(&OwnerComp) == false) return;
 			if (UStateComponent* StateComponent = ControlledPawn->GetComponentByClass<UStateComponent>()) {
-				StateComponent->ClearState();
+				FGameplayTagContainer CheckTags;
+				CheckTags.AddTag(MyGameplayTags::Character_State_Parried);
+				if (StateComponent->IsCrrentStateEqualToAny(CheckTags) == false) {
+					StateComponent->ClearState();
+				}
 			}
 			if (UBlackboardComponent* LambdaBBComp = OwnerComp.GetBlackboardComponent()) {
 				LambdaBBComp->SetValueAsBool(BlackboardbIsAttacking.SelectedKeyName, false);

@@ -6,6 +6,8 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Characters/EnemyCharacter.h"
+#include "MyGameplayTags.h"
+#include "Components/StateComponent.h"
 
 UBTService_SelectBehavior::UBTService_SelectBehavior() {
 	INIT_SERVICE_NODE_NOTIFY_FLAGS();
@@ -22,27 +24,42 @@ void UBTService_SelectBehavior::SetBehaviorKey(UBlackboardComponent* BlackboardC
 
 void UBTService_SelectBehavior::UpdateBehavior(UBehaviorTreeComponent& OwnerComp, UBlackboardComponent* BlackboardComp) const {
 	check(BlackboardComp);
+
+
 	AEnemyCharacter* ControlledPawn = Cast<AEnemyCharacter>(OwnerComp.GetAIOwner()->GetPawn());
 	if (!ControlledPawn) return;
-	AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TargetKey.SelectedKeyName));
-	// Check if target exists
-	if (IsValid(TargetActor)) {
-		const float Distance = TargetActor->GetDistanceTo(ControlledPawn);
-		// Check if within attack range
-		if (Distance <= AttackRangeDistance) {
-			SetBehaviorKey(BlackboardComp, EAIBehavior::MeleeAttack);
-		}
-		else {
-			SetBehaviorKey(BlackboardComp, EAIBehavior::Approach);
-		}
+
+	const UStateComponent* StateComponent = ControlledPawn->GetComponentByClass<UStateComponent>();
+	check(StateComponent);
+
+	FGameplayTagContainer CheckTags;
+	CheckTags.AddTag(MyGameplayTags::Character_State_Parried);
+
+	// ½ºÅÏ
+	if (StateComponent->IsCrrentStateEqualToAny(CheckTags)) {
+		SetBehaviorKey(BlackboardComp, EAIBehavior::Stunned);
 	}
 	else {
-		// Check if patrol point is available
-		if (ControlledPawn->GetPatrolPoint() != nullptr) {
-			SetBehaviorKey(BlackboardComp, EAIBehavior::Patrol);
+		AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TargetKey.SelectedKeyName));
+		// Check if target exists
+		if (IsValid(TargetActor)) {
+			const float Distance = TargetActor->GetDistanceTo(ControlledPawn);
+			// Check if within attack range
+			if (Distance <= AttackRangeDistance) {
+				SetBehaviorKey(BlackboardComp, EAIBehavior::MeleeAttack);
+			}
+			else {
+				SetBehaviorKey(BlackboardComp, EAIBehavior::Approach);
+			}
 		}
 		else {
-			SetBehaviorKey(BlackboardComp, EAIBehavior::Idle);
+			// Check if patrol point is available
+			if (ControlledPawn->GetPatrolPoint() != nullptr) {
+				SetBehaviorKey(BlackboardComp, EAIBehavior::Patrol);
+			}
+			else {
+				SetBehaviorKey(BlackboardComp, EAIBehavior::Idle);
+			}
 		}
 	}
 }

@@ -122,6 +122,11 @@ float AEnemyCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent,
 	return ActualDamage;
 }
 
+void AEnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+	GetWorld()->GetTimerManager().ClearTimer(ParriedDelayTimerHandle);
+	Super::EndPlay(EndPlayReason);
+}
+
 void AEnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -232,6 +237,28 @@ void AEnemyCharacter::PerformAttack(FGameplayTag& AttackTypeTag, FOnMontageEnded
 		const float StaminaCost = Weapon->GetStaminaCost(AttackTypeTag);
 		AttributeComponent->DecreaseStamina(StaminaCost);
 		AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
+	}
+}
+
+void AEnemyCharacter::Parried() {
+	check(StateComponent);
+	check(CombatComponent);
+
+	StopAnimMontage();
+	StateComponent->SetState(MyGameplayTags::Character_State_Parried);
+
+	if (const AWeapon* MainWeapon = CombatComponent->GetMainWeapon()) {
+		UAnimMontage* ParriedAnimMontage = MainWeapon->GetMontageForTag(MyGameplayTags::Character_Action_ParriedHit);
+		const float Delay = PlayAnimMontage(ParriedAnimMontage) + 1.f;
+		FTimerDelegate TimerDelegate;
+		TimerDelegate.BindLambda([this]() {
+			FGameplayTagContainer CheckTags;
+			CheckTags.AddTag(MyGameplayTags::Character_State_Death);
+			if (StateComponent->IsCrrentStateEqualToAny(CheckTags) == false) {
+				StateComponent->ClearState();
+			}
+			});
+		GetWorld()->GetTimerManager().SetTimer(ParriedDelayTimerHandle, TimerDelegate, Delay, false);
 	}
 }
 

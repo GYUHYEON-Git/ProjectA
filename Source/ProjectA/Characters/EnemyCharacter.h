@@ -70,6 +70,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AWeapon> DefaultWeaponClass;
 
+protected:
+	FTimerHandle ParriedDelayTimerHandle;
+
 public:
 	AEnemyCharacter();
 
@@ -79,6 +82,7 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 	virtual float TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -102,6 +106,7 @@ public:
 	virtual void ActivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) override;
 	virtual void DeactivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) override;
 	virtual void PerformAttack(FGameplayTag& AttackTypeTag, FOnMontageEnded& MontageEndedDelegate) override;
+	virtual void Parried() override;
 
 	// Toggle health bar visibility
 	void ToggleHealthBarVisibility(bool bVisibility);

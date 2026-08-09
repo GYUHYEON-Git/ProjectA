@@ -74,6 +74,11 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> BlockAction;
 
+	/* 패링 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> ParryAction;
+
+
 
 private:
 	// Components
@@ -216,6 +221,8 @@ protected:
 	/* 방어 자세 */
 	void Blocking();
 	void BlockingEnd();
+	/* 패링 */
+	void Parrying();
 
 protected:
 	FGameplayTag GetAttackPerform() const;
@@ -232,6 +239,10 @@ protected:
 	bool CanPlayerBlockStance() const;
 	/* 방패 막기 방어가 가능한지? */
 	bool CanPerformAttackBlocking() const;
+	/* 패링이 가능한지? */
+	bool CanPerformParry() const;
+	/* 패링 성공 여부 */
+	bool ParriedAttackSucceed() const;
 
 public:
 	void EnableComboWindow();

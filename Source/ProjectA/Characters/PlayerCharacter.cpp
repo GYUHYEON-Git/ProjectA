@@ -122,6 +122,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		// 방어 자세
 		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Started, this, &ThisClass::Blocking);
 		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Completed, this, &ThisClass::BlockingEnd);
+		// 패링
+		EnhancedInputComponent->BindAction(ParryAction, ETriggerEvent::Started, this, &ThisClass::Parrying);
 	}
 }
 
@@ -151,6 +153,19 @@ float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent
 
 	// 적과 대치중인 방향인지?
 	bFacingEnemy = UKismetMathLibrary::InRange_FloatFloat(GetDotProductTo(EventInstigator->GetPawn()), -0.1f, 1.f);
+
+	// 패링
+	if (ParriedAttackSucceed()) {
+		if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(EventInstigator->GetPawn())) {
+			CombatInterface->Parried();
+			AWeapon* MainWeapon = CombatComponent->GetMainWeapon();
+			if (IsValid(MainWeapon)) {
+				FVector Location = MainWeapon->GetActorLocation();
+				ShieldBlockingEffect(Location);
+			}
+		}
+		return ActualDamage;
+	}
 
 	// 방패 방어가 가능한지?
 	if (CanPerformAttackBlocking()) {
@@ -481,6 +496,22 @@ void APlayerCharacter::BlockingEnd() {
 	}
 }
 
+void APlayerCharacter::Parrying() {
+	check(CombatComponent);
+	check(StateComponent);
+	check(AttributeComponent);
+	if (CanPerformParry()) {
+		if (const AWeapon* MainWeapon = CombatComponent->GetMainWeapon()) {
+			UAnimMontage* ParryingMontage = MainWeapon->GetMontageForTag(MyGameplayTags::Character_Action_Parrying);
+			StateComponent->ToggleMovementInput(false);
+			AttributeComponent->ToggleStaminaRegeneration(false);
+			AttributeComponent->DecreaseStamina(10.f);
+			PlayAnimMontage(ParryingMontage);
+			AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
+		}
+	}
+}
+
 FGameplayTag APlayerCharacter::GetAttackPerform() const {
 	if (IsSprinting()) {
 		return MyGameplayTags::Character_Attack_Running;
@@ -596,6 +627,36 @@ bool APlayerCharacter::CanPerformAttackBlocking() const {
 	check(AttributeComponent);
 
 	return bFacingEnemy && CombatComponent->IsBlockingEnable() && AttributeComponent->CheckHasEnoughStamina(20.f);
+}
+
+bool APlayerCharacter::CanPerformParry() const {
+	check(StateComponent);
+	check(CombatComponent);
+	check(AttributeComponent);
+	AWeapon* MainWeapon = CombatComponent->GetMainWeapon();
+	if (!IsValid(MainWeapon)) return false;
+	
+	FGameplayTagContainer CheckTags;
+	CheckTags.AddTag(MyGameplayTags::Character_State_Attacking);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
+	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Hit);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Blocking);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Parrying);
+
+	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false &&
+		MainWeapon->GetCombatType() == ECombatType::SwordShield &&
+		AttributeComponent->CheckHasEnoughStamina(1.f);
+}
+
+bool APlayerCharacter::ParriedAttackSucceed() const {
+	check(StateComponent);
+
+	FGameplayTagContainer CheckTags;
+	CheckTags.AddTag(MyGameplayTags::Character_State_Parrying);
+
+	return StateComponent->IsCrrentStateEqualToAny(CheckTags) && bFacingEnemy;
 }
 
 void APlayerCharacter::EnableComboWindow() {
