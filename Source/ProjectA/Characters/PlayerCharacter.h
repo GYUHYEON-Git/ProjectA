@@ -256,6 +256,8 @@ public:
 	virtual void ToggleIFrames(const bool bEnabled) override;
 
 public:
+	UPlayerHUDWidget* GetHUDWidget() const;
+
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 		

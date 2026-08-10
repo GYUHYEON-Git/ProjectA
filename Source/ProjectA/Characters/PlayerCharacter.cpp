@@ -25,6 +25,7 @@
 #include "Sound/SoundBase.h"
 #include "Items/PickupItem.h"
 #include "Animations/MyAnimInstance.h"
+#include "PlayerControllers/PC_InGame.h"
 
 
 APlayerCharacter::APlayerCharacter() {
@@ -72,13 +73,6 @@ APlayerCharacter::APlayerCharacter() {
 
 void APlayerCharacter::BeginPlay() {
 	Super::BeginPlay();
-	// Create the player HUD
-	if (PlayerHUDWidgetClass) {
-		PlayerHUDWidget = CreateWidget<UPlayerHUDWidget>(GetWorld(), PlayerHUDWidgetClass);
-		if (PlayerHUDWidget) {
-			PlayerHUDWidget->AddToViewport();
-		}
-	}
 	// Equip the fist weapon
 	if (FistWeaponClass) {
 		FActorSpawnParameters SpawnParams;
@@ -86,7 +80,6 @@ void APlayerCharacter::BeginPlay() {
 		AFistWeapon* FistWeapon = GetWorld()->SpawnActor<AFistWeapon>(FistWeaponClass, GetActorTransform(), SpawnParams);
 		FistWeapon->EquipItem();
 	}
-
 	SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnOverlapBegin);
 	SphereComponent->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnOverlapEnd);
 }
@@ -706,7 +699,7 @@ void APlayerCharacter::ToggleIFrames(const bool bEnabled) {
 
 void APlayerCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
 	if (APickupItem* Item = Cast<APickupItem>(OtherActor)) {
-		if (!PlayerHUDWidget) return;
+		if (!GetHUDWidget()) return;
 		InteractableItems.AddUnique(Item);
 		GetClosestItem();
 	}
@@ -714,17 +707,24 @@ void APlayerCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActo
 
 void APlayerCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
 	if (APickupItem* Item = Cast<APickupItem>(OtherActor)) {
-		if (!PlayerHUDWidget) return;
+		if (!GetHUDWidget()) return;
 		InteractableItems.Remove(Item);
 		GetClosestItem();
 	}
+}
+
+UPlayerHUDWidget* APlayerCharacter::GetHUDWidget() const {
+	if (APC_InGame* PC = Cast<APC_InGame>(GetController())) {
+		return PC->GetPlayerHUDWidget();
+	}
+	return nullptr;
 }
 
 AActor* APlayerCharacter::GetClosestItem() {
 	APickupItem* ClosestItem = nullptr;
 	float MinDist = FLT_MAX;
 	if (InteractableItems.IsEmpty()) {
-		PlayerHUDWidget->SetTextWidgetVisiblity(false);
+		GetHUDWidget()->SetTextWidgetVisiblity(false);
 		return nullptr;
 	}
 	for (APickupItem* Item : InteractableItems) {
@@ -737,8 +737,8 @@ AActor* APlayerCharacter::GetClosestItem() {
 		}
 	}
 	FString CurrentInteractItem = ClosestItem->GetItemName();
-	PlayerHUDWidget->SetTextBlock(CurrentInteractItem);
-	PlayerHUDWidget->SetTextWidgetVisiblity(true);
+	GetHUDWidget()->SetTextBlock(CurrentInteractItem);
+	GetHUDWidget()->SetTextWidgetVisiblity(true);
 
 	return ClosestItem;
 }

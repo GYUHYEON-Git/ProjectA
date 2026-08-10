@@ -10,13 +10,11 @@ URotationComponent::URotationComponent() {
 
 }
 
-
 void URotationComponent::BeginPlay() {
 	Super::BeginPlay();
 
 
 }
-
 
 void URotationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);

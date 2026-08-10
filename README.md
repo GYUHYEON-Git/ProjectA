@@ -43,3 +43,5 @@ Developed with Unreal Engine 5
 | **Lock-On** | `Middle Mouse Click` (Scroll Wheel) |
 | **Lock-On Left** | `Q` |
 | **Lock-On Right** | `E` |
+| **Blocking** | Right Mouse |
+| **Parrying** | `Alt` |
