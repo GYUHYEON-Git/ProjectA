@@ -72,6 +72,11 @@ protected:
 
 protected:
 	FTimerHandle ParriedDelayTimerHandle;
+	FTimerHandle StunnedDelayTimerHandle;
+
+	/* 피격시 스턴 확률 */
+	UPROPERTY(EditAnywhere)
+	int StunnedRate = 0;
 
 public:
 	AEnemyCharacter();
@@ -110,6 +115,7 @@ public:
 
 	// Toggle health bar visibility
 	void ToggleHealthBarVisibility(bool bVisibility);
+	void SetCombatUIAndAudioActive(bool bIsActive);
 
 public:
 	void StartMusic();

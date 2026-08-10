@@ -35,15 +35,11 @@ void AEnemyAIController::UpdateTarget() {
 	AIPerceptionComponent->GetKnownPerceivedActors(nullptr, OutActors);
 
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	UMusicComponent* MusicComponent = ControlledEnemy->GetComponentByClass<UMusicComponent>();
 	UStateComponent* StateComponent = ControlledEnemy->GetComponentByClass<UStateComponent>();
-
-	if (!MusicComponent) return;
 
 	if (StateComponent->GetCurrentState() == MyGameplayTags::Character_State_Death) {
 		SetTarget(nullptr);
-		ControlledEnemy->ToggleHealthBarVisibility(false);
-		MusicComponent->StopMusic();
+		ControlledEnemy->SetCombatUIAndAudioActive(false);
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
 		return;
 	}
@@ -51,19 +47,16 @@ void AEnemyAIController::UpdateTarget() {
 	if (OutActors.Contains(PlayerCharacter)) {
 		if (!PlayerCharacter->IsDeath()) {
 			SetTarget(PlayerCharacter);
-			ControlledEnemy->ToggleHealthBarVisibility(true);
-			MusicComponent->StartMusic();
+			ControlledEnemy->SetCombatUIAndAudioActive(true);
 		}
 		else {
 			SetTarget(nullptr);
-			ControlledEnemy->ToggleHealthBarVisibility(false);
-			MusicComponent->StopMusic();
+			ControlledEnemy->SetCombatUIAndAudioActive(false);
 		}
 	}
 	else {
 		SetTarget(nullptr);
-		ControlledEnemy->ToggleHealthBarVisibility(false);
-		MusicComponent->StopMusic();
+		ControlledEnemy->SetCombatUIAndAudioActive(false);
 	}
 }
 
@@ -71,7 +64,9 @@ void AEnemyAIController::SetTarget(AActor* NewTarget) const {
 	if (IsValid(Blackboard)) {
 		Blackboard->SetValueAsObject(FName("Target"), NewTarget);
 	}
-	if (URotationComponent* RotationComponent = ControlledEnemy->GetComponentByClass<URotationComponent>()) {
-		RotationComponent->SetTargetActor(NewTarget);
+	if (IsValid(ControlledEnemy)) {
+		if (URotationComponent* RotationComponent = ControlledEnemy->GetComponentByClass<URotationComponent>()) {
+			RotationComponent->SetTargetActor(NewTarget);
+		}
 	}
 }

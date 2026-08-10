@@ -139,11 +139,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Movement Speed")
 	float BlockingSpeed = 250.f;
 
-	UPROPERTY(EditAnywhere, Category = "Movement Speed")
-	float SprintStamina = 10.f;
-
 	UPROPERTY(VisibleAnywhere, Category = "Movement Speed")
 	bool bSprinting = false;
+
+	UPROPERTY(EditAnywhere, Category = "Stamina Data")
+	TMap<FName, float> StaminaMap;
 
 // Combo Section
 protected:
@@ -195,6 +195,7 @@ protected:
 	bool CanRolling() const;
 	FORCEINLINE bool IsSprinting() const { return bSprinting; }
 	FORCEINLINE bool CanReceiveDamage() const { return !bEnabledIFrames; }
+	FORCEINLINE float GetStamina(FName FName) const { return StaminaMap[FName]; }
 
 	void Move(const FInputActionValue& Values);
 

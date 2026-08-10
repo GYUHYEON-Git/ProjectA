@@ -34,6 +34,7 @@ void UBTService_SelectBehavior::UpdateBehavior(UBehaviorTreeComponent& OwnerComp
 
 	FGameplayTagContainer CheckTags;
 	CheckTags.AddTag(MyGameplayTags::Character_State_Parried);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Stunned);
 
 	// ½ºÅÏ
 	if (StateComponent->IsCrrentStateEqualToAny(CheckTags)) {

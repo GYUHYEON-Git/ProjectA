@@ -101,14 +101,7 @@ float AEnemyCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent,
 
 	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID)) {
 		const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
-
-		// ShotDirection
-		FVector ShotDirection = PointDamageEvent->ShotDirection;
-		// ImpactPoint
 		FVector ImpactPoint = PointDamageEvent->HitInfo.ImpactPoint;
-		// ImpactDirection
-		FVector ImpactDirection = PointDamageEvent->HitInfo.ImpactNormal;
-		// HitLocation
 		FVector HitLocation = PointDamageEvent->HitInfo.Location;
 
 		// Notify the AI so that it can perceive the damage.
@@ -124,6 +117,7 @@ float AEnemyCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent,
 
 void AEnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 	GetWorld()->GetTimerManager().ClearTimer(ParriedDelayTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(StunnedDelayTimerHandle);
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -141,9 +135,6 @@ void AEnemyCharacter::OnDeath() {
 	if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent()) {
 		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-	/*if (UStateComponent* StateComponent = GetComponentByClass<UStateComponent>()) {
-		StateComponent->SetState(MyGameplayTags::Character_State_Death);
-	}*/
 
 	// Ragdoll
 	if (USkeletalMeshComponent* MeshComp = GetMesh()) {
@@ -151,6 +142,17 @@ void AEnemyCharacter::OnDeath() {
 		MeshComp->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 		MeshComp->SetSimulatePhysics(true);
 		GetCharacterMovement()->DisableMovement();
+	}
+}
+
+void AEnemyCharacter::SetCombatUIAndAudioActive(bool bIsActive) {
+	if (bIsActive) {
+		ToggleHealthBarVisibility(true);
+		StartMusic();
+	}
+	else {
+		ToggleHealthBarVisibility(false);
+		StopMusic();
 	}
 }
 
@@ -186,9 +188,24 @@ void AEnemyCharacter::ImpactEffect(const FVector& Location) {
 }
 
 void AEnemyCharacter::HitReaction(const AActor* Attacker) {
-	check(CombatComponent)
+	check(CombatComponent);
+	float StunnedDelay = 0.f;
+	if (StunnedRate >= FMath::RandRange(1, 100)) {
+		StateComponent->SetState(MyGameplayTags::Character_State_Stunned);
+		StunnedDelay = FMath::FRandRange(0.5f, 3.f);
+	}
 	if (UAnimMontage* HitReactAnimMontage = CombatComponent->GetMainWeapon()->GetHitReactMontage(Attacker)) {
-		PlayAnimMontage(HitReactAnimMontage);
+		const float DelaySeconds = PlayAnimMontage(HitReactAnimMontage) + StunnedDelay;
+		FTimerDelegate TimerDelegate;
+		TimerDelegate.BindLambda([this]() 
+			{
+				FGameplayTagContainer CheckTags;
+				CheckTags.AddTag(MyGameplayTags::Character_State_Stunned);
+				if (StateComponent->IsCrrentStateEqualToAny(CheckTags)) {
+					StateComponent->ClearState();
+				}
+			});
+		GetWorld()->GetTimerManager().SetTimer(StunnedDelayTimerHandle, TimerDelegate, DelaySeconds, false);
 	}
 }
 
@@ -220,9 +237,15 @@ void AEnemyCharacter::DeactivateWeaponCollision(EWeaponCollisionType WeaponColli
 }
 
 void AEnemyCharacter::PerformAttack(FGameplayTag& AttackTypeTag, FOnMontageEnded& MontageEndedDelegate) {
-	check(StateComponent)
-	check(AttributeComponent)
-	check(CombatComponent)
+	check(StateComponent);
+	check(AttributeComponent);
+	check(CombatComponent);
+
+	FGameplayTagContainer CheckTags;
+	CheckTags.AddTag(MyGameplayTags::Character_State_Stunned);
+	if (StateComponent->IsCrrentStateEqualToAny(CheckTags)) {
+		return;
+	}
 
 	if (const AWeapon* Weapon = CombatComponent->GetMainWeapon()) {
 		StateComponent->SetState(MyGameplayTags::Character_State_Attacking);

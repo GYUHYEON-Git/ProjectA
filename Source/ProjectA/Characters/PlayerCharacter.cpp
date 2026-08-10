@@ -22,7 +22,6 @@
 #include "Equipments/FistWeapon.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "Sound/SoundBase.h"
 #include "Items/PickupItem.h"
 #include "Animations/MyAnimInstance.h"
@@ -64,6 +63,11 @@ APlayerCharacter::APlayerCharacter() {
 	TargetingComponent = CreateDefaultSubobject<UTargetingComponent>(TEXT("Targeting"));
 
 	AttributeComponent->OnDeath.AddUObject(this, &ThisClass::OnDeath);
+
+	StaminaMap.Add("Sprinting", 10.f);
+	StaminaMap.Add("Rolling", 15.f);
+	StaminaMap.Add("Blocking", 20.f);
+	StaminaMap.Add("Parrying", 10.f);
 }
 
 void APlayerCharacter::BeginPlay() {
@@ -90,7 +94,6 @@ void APlayerCharacter::BeginPlay() {
 void APlayerCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 	if (InteractableItems.Num() > 1) {
-		GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Cyan, TEXT("Two"));
 		GetClosestItem();
 	}
 }
@@ -151,8 +154,22 @@ float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent
 	check(AttributeComponent);
 	check(StateComponent);
 
+	if (!CanReceiveDamage()) {
+		UE_LOG(LogTemp, Warning, TEXT("Rolling IFrames"));
+		return ActualDamage;
+	}
+
+	FVector Forward = GetActorForwardVector();
+	FVector ToTarget = EventInstigator->GetPawn()->GetActorLocation() - GetActorLocation();
+
+	Forward.Z = 0.f;
+	ToTarget.Z = 0.f;
+
+	Forward.Normalize();
+	ToTarget.Normalize();
+
 	// 적과 대치중인 방향인지?
-	bFacingEnemy = UKismetMathLibrary::InRange_FloatFloat(GetDotProductTo(EventInstigator->GetPawn()), -0.1f, 1.f);
+	bFacingEnemy = FVector::DotProduct(Forward, ToTarget) >= -0.1f;
 
 	// 패링
 	if (ParriedAttackSucceed()) {
@@ -167,44 +184,26 @@ float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent
 		return ActualDamage;
 	}
 
-	// 방패 방어가 가능한지?
-	if (CanPerformAttackBlocking()) {
-		AttributeComponent->TakeDamageAmount(0.f);
-		AttributeComponent->ToggleStaminaRegeneration(false);
-		// 스태미나 차감
-		AttributeComponent->DecreaseStamina(20.f);
-		StateComponent->SetState(MyGameplayTags::Character_State_Blocking);
-		AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
-	}
-	else {
-		AttributeComponent->TakeDamageAmount(ActualDamage);
-		StateComponent->SetState(MyGameplayTags::Character_State_Hit);
-	}
-
-	if (!CanReceiveDamage()) {
-		UE_LOG(LogTemp, Warning, TEXT("Rolling IFrames"));
-		return ActualDamage;
-	}
-
 	StateComponent->ToggleMovementInput(false);
 
 	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID)) {
 		const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
-
-		// ShotDirection
-		FVector ShotDirection = PointDamageEvent->ShotDirection;
-		// ImpactPoint
 		FVector ImpactPoint = PointDamageEvent->HitInfo.ImpactPoint;
-		// ImpactDirection
-		FVector ImpactDirection = PointDamageEvent->HitInfo.ImpactNormal;
-		// HitLocation
-		FVector HitLocation = PointDamageEvent->HitInfo.Location;
-
 		ImpactEffect(ImpactPoint);
-
 		HitReaction(EventInstigator->GetPawn());
-	}
 
+		// 방패 방어가 가능한지?
+		if (CanPerformAttackBlocking()) {
+			AttributeComponent->ToggleStaminaRegeneration(false);
+			// 스태미나 차감
+			AttributeComponent->DecreaseStamina(GetStamina("Blocking"));
+			AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
+		}
+		else {
+			AttributeComponent->TakeDamageAmount(ActualDamage);
+			StateComponent->SetState(MyGameplayTags::Character_State_Hit);
+		}
+	}
 	return ActualDamage;
 }
 
@@ -332,7 +331,7 @@ void APlayerCharacter::Sprinting() {
 		AttributeComponent->ToggleStaminaRegeneration(false);
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
 		float DeltaTime = GetWorld()->GetDeltaSeconds();
-		AttributeComponent->DecreaseStamina(SprintStamina * DeltaTime);
+		AttributeComponent->DecreaseStamina(GetStamina("Sprinting") * DeltaTime);
 		bSprinting = true;
 	}
 	else {
@@ -355,10 +354,10 @@ void APlayerCharacter::Rolling() {
 	check(AttributeComponent);
 	check(StateComponent);
 	if (CanRolling() == false) return;
-	if (AttributeComponent->CheckHasEnoughStamina(15.f)) {
+	if (AttributeComponent->CheckHasEnoughStamina(GetStamina("Rolling"))) {
 		AttributeComponent->ToggleStaminaRegeneration(false);
 		StateComponent->ToggleMovementInput(false);
-		AttributeComponent->DecreaseStamina(15.f);
+		AttributeComponent->DecreaseStamina(GetStamina("Rolling"));
 
 		FVector InputVector = GetLastMovementInputVector();
 		FRotator TargetRotation;
@@ -505,7 +504,7 @@ void APlayerCharacter::Parrying() {
 			UAnimMontage* ParryingMontage = MainWeapon->GetMontageForTag(MyGameplayTags::Character_Action_Parrying);
 			StateComponent->ToggleMovementInput(false);
 			AttributeComponent->ToggleStaminaRegeneration(false);
-			AttributeComponent->DecreaseStamina(10.f);
+			AttributeComponent->DecreaseStamina(GetStamina("Parrying"));
 			PlayAnimMontage(ParryingMontage);
 			AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
 		}
@@ -626,7 +625,8 @@ bool APlayerCharacter::CanPerformAttackBlocking() const {
 	check(CombatComponent);
 	check(AttributeComponent);
 
-	return bFacingEnemy && CombatComponent->IsBlockingEnable() && AttributeComponent->CheckHasEnoughStamina(20.f);
+	return bFacingEnemy && CombatComponent->IsBlockingEnable() &&
+		AttributeComponent->CheckHasEnoughStamina(1.f);
 }
 
 bool APlayerCharacter::CanPerformParry() const {
@@ -647,7 +647,7 @@ bool APlayerCharacter::CanPerformParry() const {
 
 	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false &&
 		MainWeapon->GetCombatType() == ECombatType::SwordShield &&
-		AttributeComponent->CheckHasEnoughStamina(1.f);
+		AttributeComponent->CheckHasEnoughStamina(GetStamina("Parrying"));
 }
 
 bool APlayerCharacter::ParriedAttackSucceed() const {

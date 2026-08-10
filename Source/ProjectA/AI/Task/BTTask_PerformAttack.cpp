@@ -27,6 +27,7 @@ EBTNodeResult::Type UBTTask_PerformAttack::ExecuteTask(UBehaviorTreeComponent& O
 			if (UStateComponent* StateComponent = ControlledPawn->GetComponentByClass<UStateComponent>()) {
 				FGameplayTagContainer CheckTags;
 				CheckTags.AddTag(MyGameplayTags::Character_State_Parried);
+				CheckTags.AddTag(MyGameplayTags::Character_State_Stunned);
 				if (StateComponent->IsCrrentStateEqualToAny(CheckTags) == false) {
 					StateComponent->ClearState();
 				}
