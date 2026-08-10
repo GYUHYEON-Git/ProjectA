@@ -7,6 +7,8 @@
 #include "PC_InGame.generated.h"
 
 class UPlayerHUDWidget;
+class UAudioComponent;
+class USoundBase;
 /**
  * 
  */
@@ -22,11 +24,28 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UPlayerHUDWidget> PlayerHUDWidget;
 
+	UPROPERTY()
+	TObjectPtr<UAudioComponent> BGMAudioComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	TObjectPtr<USoundBase> InGameBGM;
+
+	bool bStartedMusic = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Volume = 0.5f;
+
 protected:
 	virtual void BeginPlay() override;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	UPlayerHUDWidget* GetPlayerHUDWidget() const { return PlayerHUDWidget; }
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void StartInGameBGM(float FadeInDuration = 1.0f);
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void StopInGameBGM(float FadeOutDuration = 1.0f);
 	
 };

@@ -4,12 +4,12 @@
 #include "PlayerControllers/PC_InGame.h"
 
 #include "UI/PlayerHUDWidget.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/AudioComponent.h"
 
 void APC_InGame::BeginPlay() {
 	Super::BeginPlay();
-	// 인게임 PlayerController의 BeginPlay() 등
 	bShowMouseCursor = false;
-
 	FInputModeGameOnly InputMode;
 	SetInputMode(InputMode);
 	// Create the player HUD
@@ -18,5 +18,26 @@ void APC_InGame::BeginPlay() {
 		if (PlayerHUDWidget) {
 			PlayerHUDWidget->AddToViewport();
 		}
+	}
+	StartInGameBGM(1.f);
+}
+
+void APC_InGame::StartInGameBGM(float FadeInDuration) {
+	if (InGameBGM) {
+		if (!bStartedMusic) {
+			bStartedMusic = true;
+			BGMAudioComponent = UGameplayStatics::CreateSound2D(this, InGameBGM);
+			if (BGMAudioComponent) {
+				BGMAudioComponent->SetVolumeMultiplier(Volume);
+				BGMAudioComponent->FadeIn(1.f);
+			}
+		}
+	}
+}
+
+void APC_InGame::StopInGameBGM(float FadeOutDuration) {
+	if (IsValid(BGMAudioComponent) && BGMAudioComponent->IsPlaying()) {
+		bStartedMusic = false;
+		BGMAudioComponent->FadeOut(FadeOutDuration, 0);
 	}
 }

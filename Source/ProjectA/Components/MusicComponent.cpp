@@ -5,6 +5,7 @@
 
 #include "Kismet/GameplayStatics.h"
 #include "Components/AudioComponent.h"
+#include "PlayerControllers/PC_InGame.h"
 
 UMusicComponent::UMusicComponent()
 {
@@ -26,10 +27,13 @@ void UMusicComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 }
 
 void UMusicComponent::StartMusic() {
+	if (APC_InGame* PC = Cast<APC_InGame>(GetWorld()->GetFirstPlayerController())) {
+		PC->StopInGameBGM(1.f);
+	}
 	if (MusicAsset) {
 		if (!bStartedMusic) {
 			bStartedMusic = true;
-			Music = UGameplayStatics::SpawnSound2D(this, MusicAsset);
+			Music = UGameplayStatics::CreateSound2D(this, MusicAsset);
 			Music->SetVolumeMultiplier(Volume);
 			Music->FadeIn(1.f);
 		}
@@ -37,8 +41,11 @@ void UMusicComponent::StartMusic() {
 }
 
 void UMusicComponent::StopMusic() {
-	if (IsValid(Music)) {
+	if (IsValid(Music) && Music->IsPlaying()) {
 		bStartedMusic = false;
 		Music->FadeOut(2.f, 0);
+	}
+	if (APC_InGame* PC = Cast<APC_InGame>(GetWorld()->GetFirstPlayerController())) {
+		PC->StartInGameBGM(1.f);
 	}
 }

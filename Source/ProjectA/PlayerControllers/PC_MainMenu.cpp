@@ -29,10 +29,14 @@ void APC_MainMenu::BeginPlay() {
 			MainMenuHUDWidget->AddToViewport();
 		}
 	}
+	StartMainMenuBGM(3.f);
+}
+
+void APC_MainMenu::StartMainMenuBGM(float FadeInDuration) {
 	if (MainMenuBGM) {
-		BGMAudioComponent = UGameplayStatics::SpawnSound2D(this, MainMenuBGM);
+		BGMAudioComponent = UGameplayStatics::CreateSound2D(this, MainMenuBGM);
 		if (BGMAudioComponent) {
-			BGMAudioComponent->FadeIn(1.0f);
+			BGMAudioComponent->FadeIn(FadeInDuration);
 		}
 	}
 }

@@ -30,11 +30,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
 	TObjectPtr<USoundBase> MainMenuBGM;
 
+
 protected:
 	virtual void BeginPlay() override;
 
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void StartMainMenuBGM(float FadeOutDuration = 1.0f);
+
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 	void StopMainMenuBGM(float FadeOutDuration = 1.0f);
 
