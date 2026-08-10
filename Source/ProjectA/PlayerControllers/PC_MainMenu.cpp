@@ -22,8 +22,6 @@ void APC_MainMenu::BeginPlay() {
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 	SetInputMode(InputMode);
 
-
-
 	// Create the player HUD
 	if (MainMenuHUDWidgetClass) {
 		MainMenuHUDWidget = CreateWidget<UMainMenuHUDWidget>(this, MainMenuHUDWidgetClass);

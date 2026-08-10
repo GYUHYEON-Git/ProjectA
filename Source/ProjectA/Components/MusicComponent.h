@@ -23,6 +23,9 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UAudioComponent> Music;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Volume = 0.5f;
+
 	bool bStartedMusic = false;
 
 protected:

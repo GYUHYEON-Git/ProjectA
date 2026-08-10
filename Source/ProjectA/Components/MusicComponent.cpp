@@ -16,7 +16,6 @@ UMusicComponent::UMusicComponent()
 void UMusicComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
 }
 
 
@@ -27,10 +26,13 @@ void UMusicComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 }
 
 void UMusicComponent::StartMusic() {
-	if (!bStartedMusic) {
-		bStartedMusic = true;
-		Music = UGameplayStatics::SpawnSound2D(this, MusicAsset);
-		Music->FadeIn(1.f);
+	if (MusicAsset) {
+		if (!bStartedMusic) {
+			bStartedMusic = true;
+			Music = UGameplayStatics::SpawnSound2D(this, MusicAsset);
+			Music->SetVolumeMultiplier(Volume);
+			Music->FadeIn(1.f);
+		}
 	}
 }
 
