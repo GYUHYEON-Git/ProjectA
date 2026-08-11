@@ -20,6 +20,7 @@
 #include "Interfaces/Interact.h"
 #include "Equipments/Weapon.h"
 #include "Equipments/FistWeapon.h"
+#include "Equipments/Shield.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
@@ -188,7 +189,6 @@ float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent
 		// 방패 방어가 가능한지?
 		if (CanPerformAttackBlocking()) {
 			AttributeComponent->ToggleStaminaRegeneration(false);
-			// 스태미나 차감
 			AttributeComponent->DecreaseStamina(GetStamina("Blocking"));
 			AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
 		}
@@ -600,6 +600,10 @@ bool APlayerCharacter::CanPlayerBlockStance() const {
 	}
 	AWeapon* Weapon = CombatComponent->GetMainWeapon();
 	if (!IsValid(Weapon)) {
+		return false;
+	}
+	AShield* Shield = CombatComponent->GetShield();
+	if (!IsValid(Shield)) {
 		return false;
 	}
 	FGameplayTagContainer CheckTags;
