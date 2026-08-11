@@ -37,7 +37,7 @@ void UBTService_SelectBehavior::UpdateBehavior(UBehaviorTreeComponent& OwnerComp
 	CheckTags.AddTag(MyGameplayTags::Character_State_Stunned);
 
 	// ½ºÅÏ
-	if (StateComponent->IsCrrentStateEqualToAny(CheckTags)) {
+	if (StateComponent->IsCurrentStateEqualToAny(CheckTags)) {
 		SetBehaviorKey(BlackboardComp, EAIBehavior::Stunned);
 	}
 	else {

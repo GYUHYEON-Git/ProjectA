@@ -7,8 +7,13 @@
 #include "PC_InGame.generated.h"
 
 class UPlayerHUDWidget;
+class UPauseMenuWidget;
 class UAudioComponent;
 class USoundBase;
+class UInputMappingContext;
+class UInputAction;
+class UDemoEndWidget;
+class UDiedWidget;
 /**
  * 
  */
@@ -24,11 +29,35 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UPlayerHUDWidget> PlayerHUDWidget;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UPauseMenuWidget> PauseMenuWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UPauseMenuWidget> PauseMenuWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<UDemoEndWidget> DemoEndWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UDemoEndWidget> DemoEndWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<UDiedWidget> DiedWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UDiedWidget> DiedWidget;
+
 	UPROPERTY()
 	TObjectPtr<UAudioComponent> BGMAudioComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
 	TObjectPtr<USoundBase> InGameBGM;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputMappingContext> InGameMappingContext;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> PauseAction;
 
 	bool bStartedMusic = false;
 
@@ -39,6 +68,8 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	virtual void SetupInputComponent() override;
+
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	UPlayerHUDWidget* GetPlayerHUDWidget() const { return PlayerHUDWidget; }
 
@@ -47,5 +78,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 	void StopInGameBGM(float FadeOutDuration = 1.0f);
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void TogglePauseMenu();
+
+	void ShowDemoEndMenu();
+
+	void ShowGameOver();
 	
 };

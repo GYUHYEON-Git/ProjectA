@@ -24,6 +24,7 @@
 #include "Perception/AISense_Damage.h"
 #include "AIController.h"
 #include "BrainComponent.h"
+#include "GameModes/GM_InGame.h"
 
 AEnemyCharacter::AEnemyCharacter()
 {
@@ -143,6 +144,9 @@ void AEnemyCharacter::OnDeath() {
 		MeshComp->SetSimulatePhysics(true);
 		GetCharacterMovement()->DisableMovement();
 	}
+	if (AGM_InGame* GameMode = Cast<AGM_InGame>(UGameplayStatics::GetGameMode(GetWorld()))) {
+		GameMode->OnEnemyDied();
+	}
 }
 
 void AEnemyCharacter::SetCombatUIAndAudioActive(bool bIsActive) {
@@ -201,7 +205,7 @@ void AEnemyCharacter::HitReaction(const AActor* Attacker) {
 			{
 				FGameplayTagContainer CheckTags;
 				CheckTags.AddTag(MyGameplayTags::Character_State_Stunned);
-				if (StateComponent->IsCrrentStateEqualToAny(CheckTags)) {
+				if (StateComponent->IsCurrentStateEqualToAny(CheckTags)) {
 					StateComponent->ClearState();
 				}
 			});
@@ -221,7 +225,7 @@ bool AEnemyCharacter::CanBeTargeted() {
 	}
 	FGameplayTagContainer TagCheck;
 	TagCheck.AddTag(MyGameplayTags::Character_State_Death);
-	return StateComponent->IsCrrentStateEqualToAny(TagCheck) == false;
+	return StateComponent->IsCurrentStateEqualToAny(TagCheck) == false;
 }
 
 void AEnemyCharacter::ActivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) {
@@ -243,7 +247,7 @@ void AEnemyCharacter::PerformAttack(FGameplayTag& AttackTypeTag, FOnMontageEnded
 
 	FGameplayTagContainer CheckTags;
 	CheckTags.AddTag(MyGameplayTags::Character_State_Stunned);
-	if (StateComponent->IsCrrentStateEqualToAny(CheckTags)) {
+	if (StateComponent->IsCurrentStateEqualToAny(CheckTags)) {
 		return;
 	}
 
@@ -277,7 +281,7 @@ void AEnemyCharacter::Parried() {
 		TimerDelegate.BindLambda([this]() {
 			FGameplayTagContainer CheckTags;
 			CheckTags.AddTag(MyGameplayTags::Character_State_Death);
-			if (StateComponent->IsCrrentStateEqualToAny(CheckTags) == false) {
+			if (StateComponent->IsCurrentStateEqualToAny(CheckTags) == false) {
 				StateComponent->ClearState();
 			}
 			});

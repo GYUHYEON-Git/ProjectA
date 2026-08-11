@@ -39,7 +39,7 @@ public:
 
 	void ClearState();
 
-	bool IsCrrentStateEqualToAny(const FGameplayTagContainer& TagsToCheck) const;
+	bool IsCurrentStateEqualToAny(const FGameplayTagContainer& TagsToCheck) const;
 
 	void ToggleMovementInput(bool bEnabled, float Duration = 0.f);
 

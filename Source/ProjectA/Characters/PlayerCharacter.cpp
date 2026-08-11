@@ -27,6 +27,7 @@
 #include "Items/PickupItem.h"
 #include "Animations/MyAnimInstance.h"
 #include "PlayerControllers/PC_InGame.h"
+#include "Gamemodes/GM_InGame.h"
 
 
 APlayerCharacter::APlayerCharacter() {
@@ -139,7 +140,7 @@ bool APlayerCharacter::IsDeath() const {
 	FGameplayTagContainer CheckTags;
 	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
 
-	return StateComponent->IsCrrentStateEqualToAny(CheckTags);
+	return StateComponent->IsCurrentStateEqualToAny(CheckTags);
 }
 
 float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) {
@@ -243,13 +244,15 @@ void APlayerCharacter::OnDeath() {
 	if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent()) {
 		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-
 	// Ragdoll
 	if (USkeletalMeshComponent* MeshComp = GetMesh()) {
 		MeshComp->SetCollisionProfileName("Ragdoll");
 		MeshComp->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 		MeshComp->SetSimulatePhysics(true);
 		GetCharacterMovement()->DisableMovement();
+	}
+	if (AGM_InGame* GameMode = Cast<AGM_InGame>(UGameplayStatics::GetGameMode(GetWorld()))) {
+		GameMode->GameOver();
 	}
 }
 
@@ -299,7 +302,7 @@ bool APlayerCharacter::CanToggleCombat() const {
 	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
 	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
-	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false;
+	return StateComponent->IsCurrentStateEqualToAny(CheckTags) == false;
 }
 
 bool APlayerCharacter::CanRolling() const {
@@ -310,7 +313,7 @@ bool APlayerCharacter::CanRolling() const {
 	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
 	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
-	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false;
+	return StateComponent->IsCurrentStateEqualToAny(CheckTags) == false;
 }
 
 void APlayerCharacter::Sprinting() {
@@ -527,7 +530,7 @@ bool APlayerCharacter::CanPerformAttack(const FGameplayTag& AttackWeaponTag) con
 	CheckTags.AddTag(MyGameplayTags::Character_State_Blocking);
 
 	const float StaminaCost = CombatComponent->GetMainWeapon()->GetStaminaCost(AttackWeaponTag);
-	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false
+	return StateComponent->IsCurrentStateEqualToAny(CheckTags) == false
 		&& CombatComponent->IsCombatEnabled()
 		&& AttributeComponent->CheckHasEnoughStamina(StaminaCost);
 }
@@ -613,7 +616,7 @@ bool APlayerCharacter::CanPlayerBlockStance() const {
 	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
 	
-	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false &&
+	return StateComponent->IsCurrentStateEqualToAny(CheckTags) == false &&
 		Weapon->GetCombatType() == ECombatType::SwordShield &&
 		AttributeComponent->CheckHasEnoughStamina(1.f);
 }
@@ -642,7 +645,7 @@ bool APlayerCharacter::CanPerformParry() const {
 	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Parrying);
 
-	return StateComponent->IsCrrentStateEqualToAny(CheckTags) == false &&
+	return StateComponent->IsCurrentStateEqualToAny(CheckTags) == false &&
 		MainWeapon->GetCombatType() == ECombatType::SwordShield &&
 		AttributeComponent->CheckHasEnoughStamina(GetStamina("Parrying"));
 }
@@ -653,7 +656,7 @@ bool APlayerCharacter::ParriedAttackSucceed() const {
 	FGameplayTagContainer CheckTags;
 	CheckTags.AddTag(MyGameplayTags::Character_State_Parrying);
 
-	return StateComponent->IsCrrentStateEqualToAny(CheckTags) && bFacingEnemy;
+	return StateComponent->IsCurrentStateEqualToAny(CheckTags) && bFacingEnemy;
 }
 
 void APlayerCharacter::EnableComboWindow() {

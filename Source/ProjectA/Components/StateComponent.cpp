@@ -32,7 +32,7 @@ void UStateComponent::ClearState() {
 	CurrentState = FGameplayTag::EmptyTag;
 }
 
-bool UStateComponent::IsCrrentStateEqualToAny(const FGameplayTagContainer& TagsToCheck) const {
+bool UStateComponent::IsCurrentStateEqualToAny(const FGameplayTagContainer& TagsToCheck) const {
 	return TagsToCheck.HasTagExact(CurrentState);
 }
 

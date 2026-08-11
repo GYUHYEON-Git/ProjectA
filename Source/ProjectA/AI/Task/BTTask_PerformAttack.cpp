@@ -28,7 +28,7 @@ EBTNodeResult::Type UBTTask_PerformAttack::ExecuteTask(UBehaviorTreeComponent& O
 				FGameplayTagContainer CheckTags;
 				CheckTags.AddTag(MyGameplayTags::Character_State_Parried);
 				CheckTags.AddTag(MyGameplayTags::Character_State_Stunned);
-				if (StateComponent->IsCrrentStateEqualToAny(CheckTags) == false) {
+				if (StateComponent->IsCurrentStateEqualToAny(CheckTags) == false) {
 					StateComponent->ClearState();
 				}
 			}
@@ -43,4 +43,16 @@ EBTNodeResult::Type UBTTask_PerformAttack::ExecuteTask(UBehaviorTreeComponent& O
 		return EBTNodeResult::InProgress;
 	}
 	return EBTNodeResult::Failed;
+}
+
+EBTNodeResult::Type UBTTask_PerformAttack::AbortTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) {
+	// 스턴 등으로 인해 공격 Task가 중간에 강제 취소되었을 때 실행됨
+	if (UBlackboardComponent* BBComp = OwnerComp.GetBlackboardComponent()) {
+		// 묶여있던 공격 상태 플래그를 강제로 false로 해제!
+		BBComp->SetValueAsBool(BlackboardbIsAttacking.SelectedKeyName, false);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("PerformAttack Task was Aborted! Resetting bIsAttacking to false."));
+
+	return Super::AbortTask(OwnerComp, NodeMemory);
 }
