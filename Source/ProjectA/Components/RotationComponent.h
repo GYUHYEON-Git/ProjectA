@@ -20,7 +20,6 @@ protected:
 	bool bShouldRotate = false;
 
 public:	
-	// Sets default values for this component's properties
 	URotationComponent();
 
 public:
@@ -28,12 +27,9 @@ public:
 	FORCEINLINE void ToggleShouldRotate(const bool bRotate) { bShouldRotate = bRotate; }
 
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 		
 };

@@ -9,20 +9,15 @@
 
 void APC_MainMenu::BeginPlay() {
 	Super::BeginPlay();
-
-	// 1. 마우스 커서 보이게 설정
 	bShowMouseCursor = true;
 	bEnableClickEvents = true;
 	bEnableMouseOverEvents = true;
 
-	// 2. 입력 모드를 UI 전용(또는 UI and Game)으로 설정하여 마우스가 화면 밖으로 나가지 않게 고정
 	FInputModeUIOnly InputMode;
-	// FInputModeGameAndUI InputMode; // 게임 입력도 같이 받으려면 사용
 
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 	SetInputMode(InputMode);
 
-	// Create the player HUD
 	if (MainMenuHUDWidgetClass) {
 		MainMenuHUDWidget = CreateWidget<UMainMenuHUDWidget>(this, MainMenuHUDWidgetClass);
 		if (MainMenuHUDWidget) {

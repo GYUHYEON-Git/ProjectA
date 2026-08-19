@@ -8,6 +8,7 @@
 UAnimNotify_AttackFinished::UAnimNotify_AttackFinished(const FObjectInitializer& ObjectInitializer) 
 	:Super(ObjectInitializer) {}
 
+// Resets the combo system when the attack ends using an AnimNotify.
 void UAnimNotify_AttackFinished::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) {
 	Super::Notify(MeshComp, Animation, EventReference);
 	if (APlayerCharacter* Character = Cast<APlayerCharacter>(MeshComp->GetOwner())) {

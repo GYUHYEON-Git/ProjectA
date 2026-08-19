@@ -17,10 +17,6 @@ class PROJECTA_API AGM_InGame : public AGameModeBase
 private:
 	int32 RemainingEnemies = 0;
 
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
-	TSubclassOf<class UUserWidget> DemoEndWidgetClass;
-
 public:
 	virtual void BeginPlay() override;
 

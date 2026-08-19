@@ -7,6 +7,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
+// Checks whether the target is within the specified range.
 bool UBTDecorator_InRangeCheck::CalculateRawConditionValue(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) const {
 	const APawn* ControlledPawn = OwnerComp.GetAIOwner()->GetPawn();
 	if (!ControlledPawn) return false;

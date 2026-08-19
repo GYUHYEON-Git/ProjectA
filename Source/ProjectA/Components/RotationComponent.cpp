@@ -12,10 +12,9 @@ URotationComponent::URotationComponent() {
 
 void URotationComponent::BeginPlay() {
 	Super::BeginPlay();
-
-
 }
 
+// Sets the attack direction through a Notify State near the beginning of the attack animation to prevent the enemy from attacking away from the character.
 void URotationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	if (!TargetActor) return;

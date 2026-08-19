@@ -16,14 +16,14 @@
 void APC_InGame::BeginPlay() {
 	Super::BeginPlay();
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer())) {
-		if (InGameMappingContext) { // 헤더에 UPROPERTY로 선언한 새 IMC 변수
-			Subsystem->AddMappingContext(InGameMappingContext, 1); // 우선순위 1로 추가
+		if (InGameMappingContext) {
+			Subsystem->AddMappingContext(InGameMappingContext, 1);
 		}
 	}
 	bShowMouseCursor = false;
 	FInputModeGameOnly InputMode;
 	SetInputMode(InputMode);
-	// Create the player HUD
+
 	if (PlayerHUDWidgetClass) {
 		PlayerHUDWidget = CreateWidget<UPlayerHUDWidget>(this, PlayerHUDWidgetClass);
 		if (PlayerHUDWidget) {

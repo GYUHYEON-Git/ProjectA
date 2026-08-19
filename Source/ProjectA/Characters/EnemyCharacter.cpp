@@ -33,14 +33,12 @@ AEnemyCharacter::AEnemyCharacter()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
-	// Create Targeting Sphere & Set Collision
 	TargetingSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("TargetingSphere"));
 	TargetingSphereComponent->SetupAttachment(GetRootComponent());
 	TargetingSphereComponent->SetCollisionObjectType(COLLISION_OBJECT_TARGETING);
 	TargetingSphereComponent->SetCollisionResponseToAllChannels(ECR_Ignore);	
 	TargetingSphereComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
-	// LockOn Widget
 	LockOnWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnWidgetComponent"));
 	LockOnWidgetComponent->SetupAttachment(GetRootComponent());
 	LockOnWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 150.f));
@@ -48,7 +46,6 @@ AEnemyCharacter::AEnemyCharacter()
 	LockOnWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
 	LockOnWidgetComponent->SetVisibility(false);
 
-	// HealthBar
 	HealthBarWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarWidgetComponent"));
 	HealthBarWidgetComponent->SetupAttachment(GetRootComponent());
 	HealthBarWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
@@ -65,7 +62,6 @@ AEnemyCharacter::AEnemyCharacter()
 	RotationComponent = CreateDefaultSubobject<URotationComponent>(TEXT("Rotation"));
 	MusicComponent = CreateDefaultSubobject<UMusicComponent>(TEXT("Music"));
 
-	// Bind to OnDeath Delegate
 	AttributeComponent->OnDeath.AddUObject(this, &ThisClass::OnDeath);
 	AttributeComponent->OnAttributeChanged.AddUObject(this, &ThisClass::OnAttributeChanged);
 }
@@ -82,7 +78,6 @@ void AEnemyCharacter::BeginPlay() {
 		CombatComponent->SetCombatEnabled(true);
 		Weapon->EquipItem();
 	}
-
 	// Set up the health bar
 	SetupHealthBar();
 }
@@ -90,7 +85,6 @@ void AEnemyCharacter::BeginPlay() {
 void AEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 float AEnemyCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) {
@@ -125,7 +119,6 @@ void AEnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 void AEnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
 }
 
 void AEnemyCharacter::OnDeath() {
@@ -136,8 +129,7 @@ void AEnemyCharacter::OnDeath() {
 	if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent()) {
 		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-
-	// Ragdoll
+	// Handles death using ragdoll physics.
 	if (USkeletalMeshComponent* MeshComp = GetMesh()) {
 		MeshComp->SetCollisionProfileName("Ragdoll");
 		MeshComp->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -145,6 +137,7 @@ void AEnemyCharacter::OnDeath() {
 		GetCharacterMovement()->DisableMovement();
 	}
 	if (AGM_InGame* GameMode = Cast<AGM_InGame>(UGameplayStatics::GetGameMode(GetWorld()))) {
+		// Tracks the number of enemy characters placed in the level through the GameMode.
 		GameMode->OnEnemyDied();
 	}
 }
@@ -177,6 +170,7 @@ void AEnemyCharacter::SetupHealthBar() {
 		}
 	}
 	if (AttributeComponent) {
+		// Updates the progress bar with the current health value.
 		AttributeComponent->BroadcastAttributeChanged(EAttributeType::Health);
 	}
 }
@@ -185,7 +179,6 @@ void AEnemyCharacter::ImpactEffect(const FVector& Location) {
 	if (ImpactSound) {
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, Location);
 	}
-
 	if (ImpactParticle) {
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticle, Location);
 	}
@@ -194,15 +187,18 @@ void AEnemyCharacter::ImpactEffect(const FVector& Location) {
 void AEnemyCharacter::HitReaction(const AActor* Attacker) {
 	check(CombatComponent);
 	float StunnedDelay = 0.f;
+	// Stuns the enemy based on the configured stun probability. The stun duration is a random value within the specified range.
 	if (StunnedRate >= FMath::RandRange(1, 100)) {
 		StateComponent->SetState(MyGameplayTags::Character_State_Stunned);
 		StunnedDelay = FMath::FRandRange(0.5f, 3.f);
 	}
+	// Clears the stun state after the hit animation duration plus the stun duration has elapsed.
 	if (UAnimMontage* HitReactAnimMontage = CombatComponent->GetMainWeapon()->GetHitReactMontage(Attacker)) {
 		const float DelaySeconds = PlayAnimMontage(HitReactAnimMontage) + StunnedDelay;
 		FTimerDelegate TimerDelegate;
 		TimerDelegate.BindLambda([this]() 
 			{
+				// Clears the stun state.
 				FGameplayTagContainer CheckTags;
 				CheckTags.AddTag(MyGameplayTags::Character_State_Stunned);
 				if (StateComponent->IsCurrentStateEqualToAny(CheckTags)) {
@@ -225,7 +221,7 @@ bool AEnemyCharacter::CanBeTargeted() {
 	}
 	FGameplayTagContainer TagCheck;
 	TagCheck.AddTag(MyGameplayTags::Character_State_Death);
-	return StateComponent->IsCurrentStateEqualToAny(TagCheck) == false;
+	return !StateComponent->IsCurrentStateEqualToAny(TagCheck);
 }
 
 void AEnemyCharacter::ActivateWeaponCollision(EWeaponCollisionType WeaponCollisionType) {
@@ -247,23 +243,20 @@ void AEnemyCharacter::PerformAttack(FGameplayTag& AttackTypeTag, FOnMontageEnded
 
 	FGameplayTagContainer CheckTags;
 	CheckTags.AddTag(MyGameplayTags::Character_State_Stunned);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Parried);
 	if (StateComponent->IsCurrentStateEqualToAny(CheckTags)) {
 		return;
 	}
-
 	if (const AWeapon* Weapon = CombatComponent->GetMainWeapon()) {
 		StateComponent->SetState(MyGameplayTags::Character_State_Attacking);
 		CombatComponent->SetLastAttackType(AttackTypeTag);
-		AttributeComponent->ToggleStaminaRegeneration(false);
+		// Plays a random attack animation instead of using a fixed sequence like the player.
 		if (UAnimMontage* Montage = Weapon->GetRandomMontageForTag(AttackTypeTag)) {
 			if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance()) {
 				AnimInstance->Montage_Play(Montage);
 				AnimInstance->Montage_SetEndDelegate(MontageEndedDelegate, Montage);
 			}
 		}
-		const float StaminaCost = Weapon->GetStaminaCost(AttackTypeTag);
-		AttributeComponent->DecreaseStamina(StaminaCost);
-		AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
 	}
 }
 
@@ -275,13 +268,15 @@ void AEnemyCharacter::Parried() {
 	StateComponent->SetState(MyGameplayTags::Character_State_Parried);
 
 	if (const AWeapon* MainWeapon = CombatComponent->GetMainWeapon()) {
+		// Stops the current animation and plays the ParriedHit animation.
 		UAnimMontage* ParriedAnimMontage = MainWeapon->GetMontageForTag(MyGameplayTags::Character_Action_ParriedHit);
 		const float Delay = PlayAnimMontage(ParriedAnimMontage) + 1.f;
 		FTimerDelegate TimerDelegate;
 		TimerDelegate.BindLambda([this]() {
+			// Resets the state only if the character is not dead.
 			FGameplayTagContainer CheckTags;
 			CheckTags.AddTag(MyGameplayTags::Character_State_Death);
-			if (StateComponent->IsCurrentStateEqualToAny(CheckTags) == false) {
+			if (!StateComponent->IsCurrentStateEqualToAny(CheckTags)) {
 				StateComponent->ClearState();
 			}
 			});

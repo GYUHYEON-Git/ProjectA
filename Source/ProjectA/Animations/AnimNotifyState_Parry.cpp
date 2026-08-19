@@ -5,6 +5,7 @@
 #include "AnimNotifyState_Parry.h"
 #include "Components/StateComponent.h"
 
+// Enters the Parry state when the Notify State begins.
 void UAnimNotifyState_Parry::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 	if (const AActor* OwnerActor = MeshComp->GetOwner()) {
@@ -13,7 +14,7 @@ void UAnimNotifyState_Parry::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnim
 		}
 	}
 }
-
+// Resets the state when the Notify State ends. If an enemy attacks during the configured window, triggers a Parry.
 void UAnimNotifyState_Parry::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) {
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 	if (const AActor* OwnerActor = MeshComp->GetOwner()) {

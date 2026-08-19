@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+// TaskNode for changing movement speed in the Behavior Tree.
 EBTNodeResult::Type UBTTaskNode_UpdateMoveSpeed::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) {
 	APawn* ControlledPawn = OwnerComp.GetAIOwner()->GetPawn();
 	if (!ControlledPawn) {

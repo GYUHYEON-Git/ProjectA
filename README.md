@@ -4,9 +4,15 @@ Developed with Unreal Engine 5
 
 ## 📌 Project Overview
 - **Title:** ProjectA
-- **Genre:** Action RPG / Souls-like
+- **Genre:** 3D Action RPG
 - **Engine:** Unreal Engine 5 (C++ Based)
 - **Development Period:** 2026.03 ~ Present (Development in Progress)
+- **Team / Role:** Solo Project
+
+---
+
+## 🎨 Asset & AI Disclosure
+- **Main Title Image:** Generated using ChatGPT
 
 ---
 
@@ -31,17 +37,17 @@ Developed with Unreal Engine 5
 | Action | Keyboard |
 | :--- | :--- |
 | **Move** | `W`, `A`, `S`, `D` |
-| **Look Around** | Mouse |
+| **Look Around** | `Mouse` |
 | **Roll** | `Spacebar` |
-| **Sprint** | `Spacebar` (Hold) |
+| **Sprint** | `Spacebar (Hold)` |
 | **Interaction** | `F` |
 | **Toggle Combat** | `R` |
-| **Light Attack** | Left Mouse Click |
-| **Heavy Attack** | `Left Shift` + Left Mouse Click |
-| **Special Attack** | Left Mouse (Hold) |
-| **Running Attack** | `Sprint` + Left Mouse Click |
-| **Lock-On** | `Middle Mouse Click` (Scroll Wheel) |
+| **Light Attack** | `Left Mouse Click` |
+| **Heavy Attack** | `Left Shift` + `Left Mouse Click` |
+| **Special Attack** | `Left Mouse (Hold)` |
+| **Running Attack** | `Sprint` + `Left Mouse Click` |
+| **Lock-On** | `Middle Mouse Click` `(Scroll Wheel)` |
 | **Lock-On Left** | `Q` |
 | **Lock-On Right** | `E` |
-| **Blocking** | Right Mouse |
+| **Blocking** | `Right Mouse` |
 | **Parrying** | `Alt` |

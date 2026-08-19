@@ -13,12 +13,11 @@ EBTNodeResult::Type UBTTask_FindPatrolPoint::ExecuteTask(UBehaviorTreeComponent&
 	if (!ControlledPawn) {
 		return EBTNodeResult::Failed;
 	}
+	// Accesses the target points stored in the enemy character in index order.
 	if (AEnemyCharacter* Character = Cast<AEnemyCharacter>(ControlledPawn)) {
-		// Store the TargetPoint's location in the Blackboard
 		OwnerComp.GetBlackboardComponent()->SetValueAsVector(BlackboardLocation.SelectedKeyName, Character->GetPatrolPoint()->GetActorLocation());
 		Character->IncrementPatrolIndex();
 		return EBTNodeResult::Succeeded;
 	}
-
 	return EBTNodeResult::Failed;
 }

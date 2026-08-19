@@ -9,22 +9,18 @@
 UAttributeComponent::UAttributeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-
 }
 
 
 void UAttributeComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	
 }
 
 
 void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
 }
 
 bool UAttributeComponent::CheckHasEnoughStamina(float StaminaCost) const {
@@ -33,12 +29,13 @@ bool UAttributeComponent::CheckHasEnoughStamina(float StaminaCost) const {
 
 void UAttributeComponent::DecreaseStamina(float StaminaCost) {
 	CurrentStamina = FMath::Clamp(CurrentStamina - StaminaCost, 0.f, MaxStamina);
+	// Updates the stamina bar UI through a broadcast when stamina decreases.
 	BroadcastAttributeChanged(EAttributeType::Stamina);
 }
 
 void UAttributeComponent::ToggleStaminaRegeneration(bool bEnable, float StartDelay) {
 	if (bEnable) {
-		if (GetWorld()->GetTimerManager().IsTimerActive(StaminaRegenTimeHandler) == false) {
+		if (!GetWorld()->GetTimerManager().IsTimerActive(StaminaRegenTimeHandler)) {
 			GetWorld()->GetTimerManager().SetTimer(StaminaRegenTimeHandler, this, &ThisClass::RegenrateStaminaHandler, 0.1f, true, StartDelay);
 		}
 	}
@@ -62,15 +59,13 @@ void UAttributeComponent::BroadcastAttributeChanged(EAttributeType AttributeType
 
 void UAttributeComponent::TakeDamageAmount(float DamageAmount) {
 	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.f, MaxHealth);
-
+	// Updates the health bar UI through a broadcast when health decreases.
 	BroadcastAttributeChanged(EAttributeType::Health);
 
 	if (CurrentHealth <= 0.f) {
-		// Set Death State
 		if (UStateComponent* StateComp = GetOwner()->FindComponentByClass<UStateComponent>()) {
 			StateComp->SetState(MyGameplayTags::Character_State_Death);
 		}	
-		// Call Death Delegate
 		if (OnDeath.IsBound()) {
 			OnDeath.Broadcast();
 		}

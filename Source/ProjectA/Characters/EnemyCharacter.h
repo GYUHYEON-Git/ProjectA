@@ -24,34 +24,30 @@ class PROJECTA_API AEnemyCharacter : public ACharacter, public ITargeting, publi
 	GENERATED_BODY()
 
 protected:
-	// Check Targeting
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<USphereComponent> TargetingSphereComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UAttributeComponent> AttributeComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UStateComponent> StateComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UCombatComponent> CombatComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<URotationComponent> RotationComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UMusicComponent> MusicComponent;
 
-	/** LockOn UI Widget */
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UWidgetComponent> LockOnWidgetComponent;
 
-	/** HealthBar */
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UWidgetComponent> HealthBarWidgetComponent;
 
-// Effect Section
 protected:
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TObjectPtr<USoundBase> ImpactSound;
@@ -74,7 +70,6 @@ protected:
 	FTimerHandle ParriedDelayTimerHandle;
 	FTimerHandle StunnedDelayTimerHandle;
 
-	/* 피격시 스턴 확률 */
 	UPROPERTY(EditAnywhere)
 	int StunnedRate = 0;
 
@@ -101,10 +96,8 @@ protected:
 	void HitReaction(const AActor* Attacker);
 
 public:
-	// ITargeting 
-	// Targeting Logic
+	// Targeting
 	virtual void OnTargeted(bool bTargeted) override;
-	// Check can be targeted
 	virtual bool CanBeTargeted() override;
 
 	// ICombatInterface.
@@ -113,7 +106,6 @@ public:
 	virtual void PerformAttack(FGameplayTag& AttackTypeTag, FOnMontageEnded& MontageEndedDelegate) override;
 	virtual void Parried() override;
 
-	// Toggle health bar visibility
 	void ToggleHealthBarVisibility(bool bVisibility);
 	void SetCombatUIAndAudioActive(bool bIsActive);
 

@@ -7,14 +7,13 @@
 
 void AShield::EquipItem() {
 	Super::EquipItem();
-
 	if (const AActor* OwnActor = GetOwner()) {
 		if (UCombatComponent* CombatComponent = OwnActor->GetComponentByClass<UCombatComponent>()) {
 			CombatComponent->SetShield(this);
 
 			FName AttachSocketName = UnequipSocketName;
 
-			// 무기가 이미 있는지 체크해보고 방패의 소켓 위치를 조정해준다.
+			// Selects the shield equip socket based on whether a weapon is equipped, the CombatType, and the combat state.
 			const AWeapon* MainWeapon = CombatComponent->GetMainWeapon();
 			if (IsValid(MainWeapon)) {
 				const ECombatType CombatType = MainWeapon->GetCombatType();

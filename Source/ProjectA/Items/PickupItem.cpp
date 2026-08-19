@@ -41,9 +41,11 @@ void APickupItem::OnConstruction(const FTransform& Transform) {
 	}
 }
 
+// Implements the Interact function through the Interact interface.
 void APickupItem::Interact(AActor* InteractorActor) {
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = InteractorActor;
+	// Spawns the AEquipment actor stored in the class, equips the item, and removes the existing AEquipment actor placed in the level.
 	AEquipment* SpawnItem = GetWorld()->SpawnActor<AEquipment>(EquipmentClass, GetActorTransform(), SpawnParams);
 	if (SpawnItem) {
 		SpawnItem->EquipItem();

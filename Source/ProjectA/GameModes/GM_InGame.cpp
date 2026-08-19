@@ -7,6 +7,7 @@
 #include "Characters/EnemyCharacter.h"
 #include "PlayerControllers/PC_InGame.h"
 
+// Counts the number of AEnemyCharacter actors in the level.
 void AGM_InGame::BeginPlay() {
 	Super::BeginPlay();
 	TArray<AActor*> FoundEnemies;
@@ -14,6 +15,8 @@ void AGM_InGame::BeginPlay() {
 	RemainingEnemies = FoundEnemies.Num();
 }
 
+// Called whenever an enemy character dies to track the number of enemies remaining in the level.
+// Displays the demo completion UI when all enemies in the level have been defeated.
 void AGM_InGame::OnEnemyDied() {
 	RemainingEnemies--;
 	if (RemainingEnemies <= 0) {

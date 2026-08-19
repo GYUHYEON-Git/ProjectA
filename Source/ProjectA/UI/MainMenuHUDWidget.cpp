@@ -50,13 +50,12 @@ void UMainMenuHUDWidget::OnControlsButtonClicked() {
 }
 
 void UMainMenuHUDWidget::OnQuitButtonClicked() {
-	// 게임 종료 처리 (에디터 플레이 중일 때는 에디터 종료, 빌드 후에는 게임 종료)
 	APlayerController* PC = GetOwningPlayer();
 	UKismetSystemLibrary::QuitGame(
 		this,
 		PC,
 		EQuitPreference::Quit,
-		false // IgnorePlatformRestrictions
+		false
 	);
 }
 

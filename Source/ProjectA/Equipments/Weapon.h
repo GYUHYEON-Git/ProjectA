@@ -26,14 +26,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment | Socket")
 	FName UnequipSocketName;
 
-	// Combat Type
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
 	ECombatType CombatType = ECombatType::SwordShield;
 
+	// Manages animations as Data Assets to play different animations based on the equipped weapon.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment | Animation")
 	TObjectPtr<UMontageActionData> MontageActionData;
 
-// Component Section
 protected:	
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UWeaponCollisionComponent> WeaponCollision;
@@ -45,16 +44,13 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UCombatComponent> CombatComponent;
 
-// Data Section
 protected:
 	UPROPERTY(EditAnywhere)
 	TMap<FGameplayTag, float> StaminaCostMap;
 
-	// Damage
 	UPROPERTY(EditAnywhere)
 	float BaseDamage = 15.f;
 
-	// DamageMultiplier
 	UPROPERTY(EditAnywhere)
 	TMap<FGameplayTag, float> DamageMultiplierMap;
 

@@ -23,25 +23,25 @@ class PROJECTA_API APC_InGame : public APlayerController
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UPlayerHUDWidget> PlayerHUDWidgetClass;
 
 	UPROPERTY()
 	TObjectPtr<UPlayerHUDWidget> PlayerHUDWidget;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UPauseMenuWidget> PauseMenuWidgetClass;
 
 	UPROPERTY()
 	TObjectPtr<UPauseMenuWidget> PauseMenuWidget;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<UDemoEndWidget> DemoEndWidgetClass;
 
 	UPROPERTY()
 	TObjectPtr<UDemoEndWidget> DemoEndWidget;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<UDiedWidget> DiedWidgetClass;
 
 	UPROPERTY()

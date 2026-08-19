@@ -31,7 +31,6 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds) {
 	Speed = Velocity.Size2D();
 	bShouldMove = Speed > 3.f && MovementComponent->GetCurrentAcceleration() != FVector::ZeroVector;
 	bIsFalling = MovementComponent->IsFalling();
-
 	Direction = UKismetAnimationLibrary::CalculateDirection(Velocity, Character->GetActorRotation());
 }
 

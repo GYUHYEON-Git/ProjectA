@@ -18,32 +18,26 @@ public:
 	FOnHitActor OnHitActor;
 
 protected:
-	// Start Socket
 	UPROPERTY(EditAnywhere)
 	FName TraceStartSocketName;
-	// End Socket
+
 	UPROPERTY(EditAnywhere)
 	FName TraceEndSocketName;
 
 protected:
-	// Sphere Size
 	UPROPERTY(EditAnywhere)
 	float TraceRadius = 20.f;
 
-	// TraceObjectType
 	UPROPERTY(EditAnywhere)
 	TArray <TEnumAsByte<EObjectTypeQuery>> TraceObjectTypes;
 
-	// Ignored ObjectType
 	UPROPERTY(EditAnywhere)
 	TArray<AActor*> IgnoredActors;
 
-	// DebugDrawType
 	UPROPERTY(EditAnywhere)
 	TEnumAsByte<EDrawDebugTrace::Type> DrawDebugType = EDrawDebugTrace::ForDuration;
 
 protected:
-	// MeshComponent
 	UPROPERTY()
 	UPrimitiveComponent* WeaponMesh;
 

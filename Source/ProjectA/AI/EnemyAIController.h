@@ -19,7 +19,6 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
 
-	/* Component that allows the AI to perceive its surroundings */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UAIPerceptionComponent> AIPerceptionComponent;
 

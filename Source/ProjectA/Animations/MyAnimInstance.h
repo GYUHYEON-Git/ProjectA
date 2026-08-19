@@ -40,12 +40,13 @@ protected:
 	float Direction;
 
 protected:
+	// Changes the Blend Space based on the combat state in the Animation Blueprint.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat Data")
 	bool bCombatEnabled = false;
-
+	// Changes the Blend Space based on the weapon type in the Animation Blueprint.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat Data")
 	ECombatType CombatType = ECombatType::None;
-
+	// Changes the Blend Space based on the guard state in the Animation Blueprint.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat Data")
 	bool bShouldBlocking = false;
 

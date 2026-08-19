@@ -34,10 +34,10 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> Camera;
 
+private:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
-	// InputAction
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> MoveAction;
 
@@ -59,29 +59,22 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> HeavyAttackAction;
 
-	/** LockedOn */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> LockOnTargetAction;
 
-	/** Switch target to the left. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> LeftTargetAction;
 
-	/** Switch target to the right. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> RightTargetAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> BlockAction;
 
-	/* 패링 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> ParryAction;
 
-
-
 private:
-	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAttributeComponent> AttributeComponent;
 
@@ -91,12 +84,10 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCombatComponent> CombatComponent;
 
-	/** LockedOn Targeting */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UTargetingComponent> TargetingComponent;
 
-	// Item Overlap
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USphereComponent> SphereComponent;
 
 protected:
@@ -104,15 +95,6 @@ protected:
 	TArray<TObjectPtr<APickupItem>> InteractableItems;
 
 protected:
-	// UI
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UPlayerHUDWidget> PlayerHUDWidgetClass;
-
-	UPROPERTY()
-	TObjectPtr<UPlayerHUDWidget> PlayerHUDWidget;
-
-protected:
-	// Fist weapon
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AFistWeapon> FistWeaponClass;
 
@@ -147,23 +129,16 @@ protected:
 
 // Combo Section
 protected:
-	/* Is the combo sequence in progress? */
 	bool bComboSequenceRunning = false;
-	/* Can the player input the next combo attack? */
 	bool bCanComboInput = false;
-	/* Current combo count. */
 	int32 ComboCounter = 0;
-	/* Whether combo input has been received. */
 	bool bSavedComboInput = false;
-	/* Timer handle used to reset the combo. */
 	FTimerHandle ComboResetTimerHandle;
 
 protected:
-	/* 적과 대치중인 방향인지? */
 	bool bFacingEnemy = false;
 
 protected:
-	/* Whether invincibility frames are enabled */
 	bool bEnabledIFrames = false;
 
 public:
@@ -185,6 +160,7 @@ public:
 	
 	virtual float TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	void ImpactEffect(const FVector& Location);
+	void UnblockedHitEffect(const FVector& Location) const;
 	void ShieldBlockingEffect(const FVector& Location) const;
 	void HitReaction(const AActor* Attacker);
 	void OnDeath();
@@ -197,55 +173,41 @@ protected:
 	FORCEINLINE bool CanReceiveDamage() const { return !bEnabledIFrames; }
 	FORCEINLINE float GetStamina(FName FName) const { return StaminaMap[FName]; }
 
+	// InputAction
 	void Move(const FInputActionValue& Values);
-
 	void Look(const FInputActionValue& Values);
-
 	void Sprinting();
-
 	void StopSprint();
-
 	void Rolling();
-
 	void Interact();
-
 	void ToggleCombat();
 	void AutoToggleCombat();
-	/* Attack */
 	void Attack();
 	void SpecialAttack();
 	void HeavyAttack();
-	/* Lock On */
 	void LockOnTarget();
 	void LeftTarget();
 	void RightTarget();
-	/* 방어 자세 */
 	void Blocking();
 	void BlockingEnd();
-	/* 패링 */
 	void Parrying();
 
 protected:
+	// Attack
 	FGameplayTag GetAttackPerform() const;
-
-	/* Check whether an attack can be performed. */
 	bool CanPerformAttack(const FGameplayTag& AttackTypeTag) const;
-	/* Execute the attack. */
 	void DoAttack(const FGameplayTag& AttackTypeTag);
-	/* Execute the combo. */
 	void ExecuteComboAttack(const FGameplayTag& AttackTypeTag);
-	/* Reset the combo. */
 	void ResetCombo();
-	/* 방어 자세 가능 여부 */
+	// Blocking
 	bool CanPlayerBlockStance() const;
-	/* 방패 막기 방어가 가능한지? */
 	bool CanPerformAttackBlocking() const;
-	/* 패링이 가능한지? */
+	// Parrying
 	bool CanPerformParry() const;
-	/* 패링 성공 여부 */
 	bool ParriedAttackSucceed() const;
 
 public:
+	// Combo
 	void EnableComboWindow();
 	void DisableComboWindow();
 	void AttackFinished(const float ComboResetDelay);

@@ -18,7 +18,7 @@ class PROJECTA_API APC_MainMenu : public APlayerController
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UMainMenuHUDWidget> MainMenuHUDWidgetClass;
 
 	UPROPERTY()

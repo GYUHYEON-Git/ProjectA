@@ -1,4 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
+// 실제 레벨에 배치되는 아이템 클래스
 
 #pragma once
 

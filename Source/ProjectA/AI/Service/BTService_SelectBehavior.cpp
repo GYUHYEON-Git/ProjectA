@@ -25,7 +25,6 @@ void UBTService_SelectBehavior::SetBehaviorKey(UBlackboardComponent* BlackboardC
 void UBTService_SelectBehavior::UpdateBehavior(UBehaviorTreeComponent& OwnerComp, UBlackboardComponent* BlackboardComp) const {
 	check(BlackboardComp);
 
-
 	AEnemyCharacter* ControlledPawn = Cast<AEnemyCharacter>(OwnerComp.GetAIOwner()->GetPawn());
 	if (!ControlledPawn) return;
 
@@ -36,28 +35,31 @@ void UBTService_SelectBehavior::UpdateBehavior(UBehaviorTreeComponent& OwnerComp
 	CheckTags.AddTag(MyGameplayTags::Character_State_Parried);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Stunned);
 
-	// ½ºÅÏ
+	// If the enemy is stunned or parried, set the behavior to Stunned.
 	if (StateComponent->IsCurrentStateEqualToAny(CheckTags)) {
 		SetBehaviorKey(BlackboardComp, EAIBehavior::Stunned);
 	}
 	else {
 		AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TargetKey.SelectedKeyName));
-		// Check if target exists
+		// If a target exists.
 		if (IsValid(TargetActor)) {
 			const float Distance = TargetActor->GetDistanceTo(ControlledPawn);
-			// Check if within attack range
+			// If the target is within attack range, set the behavior to Attack.
 			if (Distance <= AttackRangeDistance) {
 				SetBehaviorKey(BlackboardComp, EAIBehavior::MeleeAttack);
 			}
+			// If the target is outside attack range, set the behavior to Approach.
 			else {
 				SetBehaviorKey(BlackboardComp, EAIBehavior::Approach);
 			}
 		}
+		// If no target exists.
 		else {
-			// Check if patrol point is available
+			// If a target point exists, set the behavior to Patrol.
 			if (ControlledPawn->GetPatrolPoint() != nullptr) {
 				SetBehaviorKey(BlackboardComp, EAIBehavior::Patrol);
 			}
+			// If no target point exists, set the behavior to Idle.
 			else {
 				SetBehaviorKey(BlackboardComp, EAIBehavior::Idle);
 			}

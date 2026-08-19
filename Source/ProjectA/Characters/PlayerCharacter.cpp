@@ -98,29 +98,20 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
-
 		EnhancedInputComponent->BindAction(SprintRollingAction, ETriggerEvent::Triggered, this, &ThisClass::Sprinting);
 		EnhancedInputComponent->BindAction(SprintRollingAction, ETriggerEvent::Completed, this, &ThisClass::StopSprint);
 		EnhancedInputComponent->BindAction(SprintRollingAction, ETriggerEvent::Canceled, this, &ThisClass::Rolling);
-
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Interact);
-
 		EnhancedInputComponent->BindAction(ToggleCombatAction, ETriggerEvent::Started, this, &ThisClass::ToggleCombat);
-		// Automatically switch to Combat state
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ThisClass::AutoToggleCombat);
-		// Normal attack
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Canceled, this, &ThisClass::Attack);
-		// Special attack
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ThisClass::SpecialAttack);
-		// HeavyAttack
 		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Started, this, &ThisClass::HeavyAttack);
 		EnhancedInputComponent->BindAction(LockOnTargetAction, ETriggerEvent::Started, this, &ThisClass::LockOnTarget);
 		EnhancedInputComponent->BindAction(LeftTargetAction, ETriggerEvent::Started, this, &ThisClass::LeftTarget);
 		EnhancedInputComponent->BindAction(RightTargetAction, ETriggerEvent::Started, this, &ThisClass::RightTarget);
-		// 방어 자세
 		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Started, this, &ThisClass::Blocking);
 		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Completed, this, &ThisClass::BlockingEnd);
-		// 패링
 		EnhancedInputComponent->BindAction(ParryAction, ETriggerEvent::Started, this, &ThisClass::Parrying);
 	}
 }
@@ -148,9 +139,8 @@ float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent
 
 	check(AttributeComponent);
 	check(StateComponent);
-
+	// Returns if the character is in a state where damage cannot be received (rolling).
 	if (!CanReceiveDamage()) {
-		UE_LOG(LogTemp, Warning, TEXT("Rolling IFrames"));
 		return ActualDamage;
 	}
 
@@ -163,16 +153,17 @@ float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent
 	Forward.Normalize();
 	ToTarget.Normalize();
 
-	// 적과 대치중인 방향인지?
+	// Checks whether the character is facing the enemy.
 	bFacingEnemy = FVector::DotProduct(Forward, ToTarget) >= -0.1f;
 
-	// 패링
+	// Handles the Parry if the character is in the Parry state.
 	if (ParriedAttackSucceed()) {
 		if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(EventInstigator->GetPawn())) {
+			// Applies the Parry to the attacker.
 			CombatInterface->Parried();
-			AWeapon* MainWeapon = CombatComponent->GetMainWeapon();
-			if (IsValid(MainWeapon)) {
-				FVector Location = MainWeapon->GetActorLocation();
+			AShield* Shield = CombatComponent->GetShield();
+			if (IsValid(Shield)) {
+				FVector Location = Shield->GetActorLocation();
 				ShieldBlockingEffect(Location);
 			}
 		}
@@ -187,13 +178,15 @@ float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent
 		ImpactEffect(ImpactPoint);
 		HitReaction(EventInstigator->GetPawn());
 
-		// 방패 방어가 가능한지?
+		// Checks whether shield blocking is possible.
 		if (CanPerformAttackBlocking()) {
+			// Consumes stamina when shield blocking succeeds.
 			AttributeComponent->ToggleStaminaRegeneration(false);
 			AttributeComponent->DecreaseStamina(GetStamina("Blocking"));
 			AttributeComponent->ToggleStaminaRegeneration(true, 1.5f);
 		}
 		else {
+			// Reduces health when shield blocking is not possible.
 			AttributeComponent->TakeDamageAmount(ActualDamage);
 			StateComponent->SetState(MyGameplayTags::Character_State_Hit);
 		}
@@ -202,16 +195,22 @@ float APlayerCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent
 }
 
 void APlayerCharacter::ImpactEffect(const FVector& Location) {
+	// Plays the shield block effect.
 	if (CanPerformAttackBlocking()) {
 		ShieldBlockingEffect(Location);
 	}
+	// Plays the hit effect.
 	else {
-		if (ImpactSound) {
-			UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, Location);
-		}
-		if (ImpactParticle) {
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticle, Location);
-		}
+		UnblockedHitEffect(Location);
+	}
+}
+
+void APlayerCharacter::UnblockedHitEffect(const FVector& Location) const {
+	if (ImpactSound) {
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, Location);
+	}
+	if (ImpactParticle) {
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticle, Location);
 	}
 }
 
@@ -219,7 +218,6 @@ void APlayerCharacter::ShieldBlockingEffect(const FVector& Location) const {
 	if (BlockingSound) {
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), BlockingSound, Location);
 	}
-
 	if (BlockingParticle) {
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BlockingParticle, Location);
 	}
@@ -227,12 +225,13 @@ void APlayerCharacter::ShieldBlockingEffect(const FVector& Location) const {
 
 void APlayerCharacter::HitReaction(const AActor* Attacker) {
 	check(CombatComponent);
-
+	// Plays the guard animation.
 	if (CanPerformAttackBlocking()) {
 		if (UAnimMontage* BlockingMontage = CombatComponent->GetMainWeapon()->GetMontageForTag(MyGameplayTags::Character_Action_BlockingHit)) {
 			PlayAnimMontage(BlockingMontage);
 		}
 	}
+	// Plays the hit animation based on the hit direction.
 	else {
 		if (UAnimMontage* HitReactAnimMontage = CombatComponent->GetMainWeapon()->GetHitReactMontage(Attacker)) {
 			PlayAnimMontage(HitReactAnimMontage);
@@ -244,7 +243,7 @@ void APlayerCharacter::OnDeath() {
 	if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent()) {
 		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-	// Ragdoll
+	// Handles death using ragdoll physics.
 	if (USkeletalMeshComponent* MeshComp = GetMesh()) {
 		MeshComp->SetCollisionProfileName("Ragdoll");
 		MeshComp->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -258,7 +257,7 @@ void APlayerCharacter::OnDeath() {
 
 void APlayerCharacter::Move(const FInputActionValue& Values) {
 	check(StateComponent);
-	if (StateComponent->MovementInputEnabled() == false) return;
+	if (!StateComponent->MovementInputEnabled()) return;
 
 	FVector2D MovementVector = Values.Get<FVector2D>();
 	if (Controller != nullptr) {
@@ -274,7 +273,6 @@ void APlayerCharacter::Move(const FInputActionValue& Values) {
 }
 
 void APlayerCharacter::Look(const FInputActionValue& Values) {
-	// Block input while in the LockedOn state
 	if (TargetingComponent && TargetingComponent->IsLockOn()) {
 		return;
 	}
@@ -291,10 +289,10 @@ bool APlayerCharacter::IsMoving() const {
 	}
 	return false;
 }
-
+// Checks whether the combat state can be changed.
 bool APlayerCharacter::CanToggleCombat() const {
 	check(StateComponent);
-	if (IsValid(CombatComponent->GetMainWeapon()) == false) return false;
+	if (!IsValid(CombatComponent->GetMainWeapon())) return false;
 	if (CombatComponent->GetMainWeapon()->GetCombatType() == ECombatType::MeleeFists) return false;
 
 	FGameplayTagContainer CheckTags;
@@ -302,9 +300,12 @@ bool APlayerCharacter::CanToggleCombat() const {
 	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
 	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
-	return StateComponent->IsCurrentStateEqualToAny(CheckTags) == false;
+	CheckTags.AddTag(MyGameplayTags::Character_State_Hit);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Blocking);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Parrying);
+	return !StateComponent->IsCurrentStateEqualToAny(CheckTags);
 }
-
+// Checks whether rolling is possible.
 bool APlayerCharacter::CanRolling() const {
 	check(StateComponent);
 
@@ -313,7 +314,9 @@ bool APlayerCharacter::CanRolling() const {
 	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
 	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
-	return StateComponent->IsCurrentStateEqualToAny(CheckTags) == false;
+	CheckTags.AddTag(MyGameplayTags::Character_State_Hit);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Parrying);
+	return !StateComponent->IsCurrentStateEqualToAny(CheckTags);
 }
 
 void APlayerCharacter::Sprinting() {
@@ -322,8 +325,8 @@ void APlayerCharacter::Sprinting() {
 	if (CombatComponent->IsBlockingEnable()) {
 		return;
 	}
-
 	if (AttributeComponent->GetCurrentStamina() > 5.f && IsMoving()) {
+		// Changes to running speed, stops stamina regeneration, and consumes stamina.
 		AttributeComponent->ToggleStaminaRegeneration(false);
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
 		float DeltaTime = GetWorld()->GetDeltaSeconds();
@@ -349,7 +352,7 @@ void APlayerCharacter::StopSprint() {
 void APlayerCharacter::Rolling() {
 	check(AttributeComponent);
 	check(StateComponent);
-	if (CanRolling() == false) return;
+	if (!CanRolling()) return;
 	if (AttributeComponent->CheckHasEnoughStamina(GetStamina("Rolling"))) {
 		AttributeComponent->ToggleStaminaRegeneration(false);
 		StateComponent->ToggleMovementInput(false);
@@ -469,7 +472,9 @@ void APlayerCharacter::Blocking() {
 	check(CombatComponent);
 	check(StateComponent);
 	if (CombatComponent->GetMainWeapon()) {
+		// Checks whether the shield guard stance is possible.
 		if (CanPlayerBlockStance()) {
+			// Changes to guard movement speed and sets the guard Blend Space.
 			GetCharacterMovement()->MaxWalkSpeed = BlockingSpeed;
 			CombatComponent->SetBlockingEnabled(true);
 			if (UMyAnimInstance* AnimInstance = Cast<UMyAnimInstance>(GetMesh()->GetAnimInstance())) {
@@ -485,9 +490,10 @@ void APlayerCharacter::BlockingEnd() {
 	check(StateComponent);
 	CombatComponent->SetBlockingEnabled(false);
 	if (UMyAnimInstance* AnimInstance = Cast<UMyAnimInstance>(GetMesh()->GetAnimInstance())) {
+		// Changes to normal movement speed and sets the normal Blend Space.
+		GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
 		AnimInstance->UpdateBlocking(false);
 		StateComponent->ClearState();
-		GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
 	}
 }
 
@@ -495,8 +501,10 @@ void APlayerCharacter::Parrying() {
 	check(CombatComponent);
 	check(StateComponent);
 	check(AttributeComponent);
+	// Checks whether Parry is possible.
 	if (CanPerformParry()) {
 		if (const AWeapon* MainWeapon = CombatComponent->GetMainWeapon()) {
+			// Plays the Parry animation and consumes stamina.
 			UAnimMontage* ParryingMontage = MainWeapon->GetMontageForTag(MyGameplayTags::Character_Action_Parrying);
 			StateComponent->ToggleMovementInput(false);
 			AttributeComponent->ToggleStaminaRegeneration(false);
@@ -514,11 +522,12 @@ FGameplayTag APlayerCharacter::GetAttackPerform() const {
 	return MyGameplayTags::Character_Attack_Light;
 }
 
+// Checks whether the character is in a state where an attack is possible.
 bool APlayerCharacter::CanPerformAttack(const FGameplayTag& AttackWeaponTag) const {
 	check(StateComponent);
 	check(CombatComponent);
 	check(AttributeComponent);
-	if (IsValid(CombatComponent->GetMainWeapon()) == false) {
+	if (!IsValid(CombatComponent->GetMainWeapon())) {
 		return false;
 	}
 
@@ -528,20 +537,21 @@ bool APlayerCharacter::CanPerformAttack(const FGameplayTag& AttackWeaponTag) con
 	CheckTags.AddTag(MyGameplayTags::Character_State_Hit);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Blocking);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Parrying);
 
 	const float StaminaCost = CombatComponent->GetMainWeapon()->GetStaminaCost(AttackWeaponTag);
-	return StateComponent->IsCurrentStateEqualToAny(CheckTags) == false
+	return !StateComponent->IsCurrentStateEqualToAny(CheckTags)
 		&& CombatComponent->IsCombatEnabled()
 		&& AttributeComponent->CheckHasEnoughStamina(StaminaCost);
 }
-
+// Plays the actual attack animation.
 void APlayerCharacter::DoAttack(const FGameplayTag& AttackTypeTag) {
 	check(StateComponent);
 	check(AttributeComponent);
 	check(CombatComponent);
 
 	if (const AWeapon* Weapon = CombatComponent->GetMainWeapon()) {
-		if (Weapon->HasValidMontage(AttackTypeTag) == false) {
+		if (!Weapon->HasValidMontage(AttackTypeTag)) {
 			return;
 		}
 
@@ -552,7 +562,7 @@ void APlayerCharacter::DoAttack(const FGameplayTag& AttackTypeTag) {
 
 		UAnimMontage* Montage = Weapon->GetMontageForTag(AttackTypeTag, ComboCounter);
 		if (!Montage) {
-			// Combo limit reached
+			// If the animation at the last index has been played, starts again from the animation at the first index.
 			ComboCounter = 0;
 			Montage = Weapon->GetMontageForTag(AttackTypeTag, ComboCounter);
 		}
@@ -565,18 +575,17 @@ void APlayerCharacter::DoAttack(const FGameplayTag& AttackTypeTag) {
 
 void APlayerCharacter::ExecuteComboAttack(const FGameplayTag& AttackTypeTag) {
 	if (StateComponent->GetCurrentState() != MyGameplayTags::Character_State_Attacking) {
-		if (bComboSequenceRunning && bCanComboInput == false) {
-			// The animation has ended, but the combo sequence is still valid - allow additional input
+		// The animation has ended, but the combo sequence is still valid - allow additional input
+		if (!bComboSequenceRunning && bCanComboInput) {
 			ComboCounter++;
-			UE_LOG(LogTemp, Warning, TEXT("Additional input : Combo Counter = %d"), ComboCounter);
 			GetWorld()->GetTimerManager().ClearTimer(ComboResetTimerHandle);
 		}
+		// When no combo sequence is active, starts the initial attack.
 		else {
-			UE_LOG(LogTemp, Warning, TEXT(">>> ComboSequence Started <<<"));
 			ResetCombo();
 			bComboSequenceRunning = true;
-
 		}
+		// Plays the attack animation.
 		DoAttack(AttackTypeTag);
 	}
 	else if (bCanComboInput) {
@@ -586,13 +595,12 @@ void APlayerCharacter::ExecuteComboAttack(const FGameplayTag& AttackTypeTag) {
 }
 
 void APlayerCharacter::ResetCombo() {
-	UE_LOG(LogTemp, Warning, TEXT("Combo Reset"));
 	bComboSequenceRunning = false;
 	bCanComboInput = false;
 	bSavedComboInput = false;
 	ComboCounter = 0;
 }
-
+// Checks whether the character can enter the shield guard stance.
 bool APlayerCharacter::CanPlayerBlockStance() const {
 	check(StateComponent);
 	check(CombatComponent);
@@ -615,12 +623,13 @@ bool APlayerCharacter::CanPlayerBlockStance() const {
 	CheckTags.AddTag(MyGameplayTags::Character_State_Hit);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
+	CheckTags.AddTag(MyGameplayTags::Character_State_Parrying);
 	
-	return StateComponent->IsCurrentStateEqualToAny(CheckTags) == false &&
+	return !StateComponent->IsCurrentStateEqualToAny(CheckTags) &&
 		Weapon->GetCombatType() == ECombatType::SwordShield &&
 		AttributeComponent->CheckHasEnoughStamina(1.f);
 }
-
+// Checks whether shield blocking is possible.
 bool APlayerCharacter::CanPerformAttackBlocking() const {
 	check(CombatComponent);
 	check(AttributeComponent);
@@ -628,7 +637,7 @@ bool APlayerCharacter::CanPerformAttackBlocking() const {
 	return bFacingEnemy && CombatComponent->IsBlockingEnable() &&
 		AttributeComponent->CheckHasEnoughStamina(1.f);
 }
-
+// Checks whether Parry is possible.
 bool APlayerCharacter::CanPerformParry() const {
 	check(StateComponent);
 	check(CombatComponent);
@@ -641,46 +650,41 @@ bool APlayerCharacter::CanPerformParry() const {
 	CheckTags.AddTag(MyGameplayTags::Character_State_Rolling);
 	CheckTags.AddTag(MyGameplayTags::Character_State_GeneralAction);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Hit);
-	CheckTags.AddTag(MyGameplayTags::Character_State_Blocking);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Death);
 	CheckTags.AddTag(MyGameplayTags::Character_State_Parrying);
 
-	return StateComponent->IsCurrentStateEqualToAny(CheckTags) == false &&
+	return !StateComponent->IsCurrentStateEqualToAny(CheckTags) &&
 		MainWeapon->GetCombatType() == ECombatType::SwordShield &&
 		AttributeComponent->CheckHasEnoughStamina(GetStamina("Parrying"));
 }
-
+// Checks whether the Parry was successful.
 bool APlayerCharacter::ParriedAttackSucceed() const {
 	check(StateComponent);
 
 	FGameplayTagContainer CheckTags;
 	CheckTags.AddTag(MyGameplayTags::Character_State_Parrying);
-
+	// Checks whether the character is currently parrying and facing the enemy.
 	return StateComponent->IsCurrentStateEqualToAny(CheckTags) && bFacingEnemy;
 }
 
+// Trigger function for enabling and disabling the combo window through an AnimNotify State.
 void APlayerCharacter::EnableComboWindow() {
 	bCanComboInput = true;
-	UE_LOG(LogTemp, Warning, TEXT("Combo Window Opened : Combo ounter = %d"), ComboCounter);
 }
-
+// Trigger function for enabling and disabling the combo window through an AnimNotify State.
 void APlayerCharacter::DisableComboWindow() {
 	check(CombatComponent);
 	bCanComboInput = false;
 	
+	// If an additional attack input is received during the combo window, plays the next attack animation.
 	if (bSavedComboInput) {
 		bSavedComboInput = false;
 		ComboCounter++;
-		UE_LOG(LogTemp, Warning, TEXT("Combo Window Closed : Advancing to next combo = %d"), ComboCounter);
 		DoAttack(CombatComponent->GetLastAttackType());
-	}
-	else {
-		UE_LOG(LogTemp, Warning, TEXT("Combo Window Closed : No input reeived"));
 	}
 }
 
 void APlayerCharacter::AttackFinished(const float ComboResetDelay) {
-	UE_LOG(LogTemp, Warning, TEXT("AttackFinished"));
 	if (StateComponent) {
 		StateComponent->ToggleMovementInput(true);
 	}
@@ -699,11 +703,11 @@ void APlayerCharacter::DeactivateWeaponCollision(EWeaponCollisionType WeaponColl
 		CombatComponent->GetMainWeapon()->DeactivateCollision(WeaponCollisionType);
 	}
 }
-
+// Trigger function for enabling invincibility while rolling.
 void APlayerCharacter::ToggleIFrames(const bool bEnabled) {
 	bEnabledIFrames = bEnabled;
 }
-
+// Called when overlapping an item. Adds the item to the list of interactable items.
 void APlayerCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
 	if (APickupItem* Item = Cast<APickupItem>(OtherActor)) {
 		if (!GetHUDWidget()) return;
@@ -711,7 +715,7 @@ void APlayerCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActo
 		GetClosestItem();
 	}
 }
-
+// Called when ending an item overlap. Removes the item from the list of interactable items.
 void APlayerCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
 	if (APickupItem* Item = Cast<APickupItem>(OtherActor)) {
 		if (!GetHUDWidget()) return;
@@ -730,10 +734,12 @@ UPlayerHUDWidget* APlayerCharacter::GetHUDWidget() const {
 AActor* APlayerCharacter::GetClosestItem() {
 	APickupItem* ClosestItem = nullptr;
 	float MinDist = FLT_MAX;
+	// If there are no interactable items within range, hides the UI and returns.
 	if (InteractableItems.IsEmpty()) {
 		GetHUDWidget()->SetTextWidgetVisiblity(false);
 		return nullptr;
 	}
+	// Finds the closest item.
 	for (APickupItem* Item : InteractableItems) {
 		if (!IsValid(Item))	continue;
 		FString Name = Item->GetName();
@@ -743,6 +749,7 @@ AActor* APlayerCharacter::GetClosestItem() {
 			ClosestItem = Item;
 		}
 	}
+	// Displays information about the closest item in the UI.
 	FString CurrentInteractItem = ClosestItem->GetItemName();
 	GetHUDWidget()->SetTextBlock(CurrentInteractItem);
 	GetHUDWidget()->SetTextWidgetVisiblity(true);

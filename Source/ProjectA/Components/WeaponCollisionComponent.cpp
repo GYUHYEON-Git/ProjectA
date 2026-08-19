@@ -47,7 +47,7 @@ void UWeaponCollisionComponent::RemoveIgnoredActor(AActor* Actor) {
 }
 
 bool UWeaponCollisionComponent::CanHitActor(AActor* Actor) const {
-	return AlreadyHitActors.Contains(Actor) == false;
+	return !AlreadyHitActors.Contains(Actor);
 }
 
 void UWeaponCollisionComponent::CollisionTrace() {
@@ -56,6 +56,7 @@ void UWeaponCollisionComponent::CollisionTrace() {
 	const FVector Start = WeaponMesh->GetSocketLocation(TraceStartSocketName);
 	const FVector End = WeaponMesh->GetSocketLocation(TraceEndSocketName);
 
+	// Detects collisions using a SphereTrace.
 	bool const bHit = UKismetSystemLibrary::SphereTraceMultiForObjects(
 		GetOwner(),
 		Start,
@@ -77,6 +78,7 @@ void UWeaponCollisionComponent::CollisionTrace() {
 			}
 
 			if (CanHitActor(HitActor)) {
+				// Stores targets that have already been hit to prevent duplicate collisions.
 				AlreadyHitActors.Add(HitActor);
 
 				// Call OnHitActor Broadcast

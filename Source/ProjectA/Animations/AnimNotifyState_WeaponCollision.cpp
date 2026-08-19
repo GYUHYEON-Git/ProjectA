@@ -9,7 +9,7 @@ UAnimNotifyState_WeaponCollision::UAnimNotifyState_WeaponCollision(const FObject
 	:Super(ObjectInitializer)
 {
 }
-
+// Starts weapon collision detection when the Notify State begins.
 void UAnimNotifyState_WeaponCollision::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 	if (AActor* OwnerActor = MeshComp->GetOwner()) {
@@ -18,7 +18,7 @@ void UAnimNotifyState_WeaponCollision::NotifyBegin(USkeletalMeshComponent* MeshC
 		}
 	}
 }
-
+// Stops weapon collision detection when the Notify State ends. Applies damage if a collision target is detected.
 void UAnimNotifyState_WeaponCollision::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) {
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 	if (AActor* OwnerActor = MeshComp->GetOwner()) {
