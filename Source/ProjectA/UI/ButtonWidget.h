@@ -26,7 +26,7 @@ public:
 public:
 	UButton* GetButton() const { return Button; }
 
-	void SetText(FText text);
+	void SetText(FText text, float size);
 
 public:
 	UButtonWidget(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());

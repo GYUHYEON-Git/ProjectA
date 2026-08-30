@@ -17,15 +17,15 @@ UMainMenuHUDWidget::UMainMenuHUDWidget(const FObjectInitializer& ObjectInitializ
 void UMainMenuHUDWidget::NativeConstruct() {
 	Super::NativeConstruct();
 	if (GameStartButton) {
-		GameStartButton->SetText(FText::FromString(TEXT("GameStart")));
+		GameStartButton->SetText(FText::FromString(TEXT("GameStart")), 36.f);
 		GameStartButton->GetButton()->OnClicked.AddDynamic(this, &ThisClass::OnGameStartButtonClicked);
 	}
 	if (ControlsButton) {
-		ControlsButton->SetText(FText::FromString(TEXT("Controls")));
+		ControlsButton->SetText(FText::FromString(TEXT("Controls")), 36.f);
 		ControlsButton->GetButton()->OnClicked.AddDynamic(this, &ThisClass::OnControlsButtonClicked);
 	}
 	if (QuitButton) {
-		QuitButton->SetText(FText::FromString(TEXT("Quit")));
+		QuitButton->SetText(FText::FromString(TEXT("Quit")), 36.f);
 		QuitButton->GetButton()->OnClicked.AddDynamic(this, &ThisClass::OnQuitButtonClicked);
 	}
 	if (ControlsWidget) {

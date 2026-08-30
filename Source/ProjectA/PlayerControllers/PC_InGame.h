@@ -61,6 +61,8 @@ protected:
 
 	bool bStartedMusic = false;
 
+	bool bPausing = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Volume = 0.5f;
 
@@ -69,6 +71,8 @@ protected:
 
 public:
 	virtual void SetupInputComponent() override;
+
+	FORCEINLINE void SetPausing(bool bPause) { bPausing = bPause; }
 
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	UPlayerHUDWidget* GetPlayerHUDWidget() const { return PlayerHUDWidget; }

@@ -13,7 +13,7 @@ UDemoEndWidget::UDemoEndWidget(const FObjectInitializer& ObjectInitializer)
 
 void UDemoEndWidget::NativeConstruct() {
 	if (CloseButton) {
-		CloseButton->SetText(FText::FromString(TEXT("X")));
+		CloseButton->SetText(FText::FromString(TEXT("X")), 36.f);
 		CloseButton->GetButton()->OnClicked.AddDynamic(this, &ThisClass::OnCloseButtonClicked);
 	}
 }

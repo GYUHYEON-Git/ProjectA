@@ -11,7 +11,7 @@ UControlsWidget::UControlsWidget(const FObjectInitializer& ObjectInitializer)
 
 void UControlsWidget::NativeConstruct() {
 	if (BackButton) {
-		BackButton->SetText(FText::FromString(TEXT("X")));
+		BackButton->SetText(FText::FromString(TEXT("X")), 36.f);
 		BackButton->GetButton()->OnClicked.AddDynamic(this, &ThisClass::HandleBackButtonClicked);
 	}
 }

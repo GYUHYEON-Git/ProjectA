@@ -19,6 +19,15 @@ class PROJECTA_API UPauseMenuWidget : public UUserWidget
 
 protected:
 	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
+	TObjectPtr<UButtonWidget> CharacterButton;
+	
+	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
+	TObjectPtr<UButtonWidget> StatusButton;
+
+	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
+	TObjectPtr<UButtonWidget> OptionButton;
+
+	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
 	TObjectPtr<UButtonWidget> ResumeButton;
 
 	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
@@ -33,6 +42,9 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidgetSwitcher> WidgetSwitcher;
 
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UWidgetSwitcher> WidgetSwitcherOption;
+
 public:
 	UPauseMenuWidget(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
@@ -40,6 +52,16 @@ public:
 
 
 protected:
+	UFUNCTION()
+	void OnCharacterButtonClicked();
+	
+	UFUNCTION()
+	void OnStatusButtonClicked();
+
+	UFUNCTION()
+	void OnOptionButtonClicked();
+
+
 	UFUNCTION()
 	void OnResumeButtonClicked();
 

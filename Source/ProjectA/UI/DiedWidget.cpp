@@ -12,7 +12,7 @@ UDiedWidget::UDiedWidget(const FObjectInitializer& ObjectInitializer)
 
 void UDiedWidget::NativeConstruct() {
 	if (MainMenuButton) {
-		MainMenuButton->SetText(FText::FromString(TEXT("MainMenu")));
+		MainMenuButton->SetText(FText::FromString(TEXT("MainMenu")), 36.f);
 		MainMenuButton->GetButton()->OnClicked.AddDynamic(this, &ThisClass::OnMainMenuButtonClicked);
 	}
 }

@@ -37,6 +37,7 @@ void APC_InGame::SetupInputComponent() {
 	Super::SetupInputComponent();
 	if (UEnhancedInputComponent* EnhancedInputComp = Cast<UEnhancedInputComponent>(InputComponent)) {
 		EnhancedInputComp->BindAction(PauseAction, ETriggerEvent::Started, this, &APC_InGame::TogglePauseMenu);
+		PauseAction->bTriggerWhenPaused = true;
 	}
 }
 
@@ -61,16 +62,33 @@ void APC_InGame::StopInGameBGM(float FadeOutDuration) {
 }
 
 void APC_InGame::TogglePauseMenu() {
-	UGameplayStatics::SetGamePaused(GetWorld(), true);
 	if (PauseMenuWidgetClass) {
-		PauseMenuWidget = CreateWidget<UPauseMenuWidget>(this, PauseMenuWidgetClass);
-		if (PauseMenuWidget) {
-			PauseMenuWidget->AddToViewport();
-			FInputModeUIOnly InputMode;
-			InputMode.SetWidgetToFocus(PauseMenuWidget->TakeWidget());
-			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-			SetInputMode(InputMode);
-			bShowMouseCursor = true;
+		if (bPausing) {
+			if (PauseMenuWidget) {
+				UGameplayStatics::SetGamePaused(GetWorld(), false);
+				FInputModeGameOnly InputMode;
+				SetInputMode(InputMode);
+				bShowMouseCursor = false;
+				PauseMenuWidget->RemoveFromParent();
+				bPausing = false;
+			}
+		}
+		else {
+			UGameplayStatics::SetGamePaused(GetWorld(), true);
+			PauseMenuWidget = CreateWidget<UPauseMenuWidget>(this, PauseMenuWidgetClass);
+			if (PauseMenuWidget) {
+				PauseMenuWidget->AddToViewport();
+				FInputModeGameAndUI InputMode;
+				InputMode.SetWidgetToFocus(PauseMenuWidget->TakeWidget());
+				InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+				SetInputMode(InputMode);
+				int32 SizeX;
+				int32 SizeY;
+				GetViewportSize(SizeX, SizeY);
+				SetMouseLocation(SizeX / 2, SizeY / 2);
+				bShowMouseCursor = true;
+				bPausing = true;
+			}
 		}
 	}
 }

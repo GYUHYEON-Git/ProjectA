@@ -15,11 +15,11 @@ void UButtonWidget::NativePreConstruct() {
 }
 
 
-void UButtonWidget::SetText(FText text) {
+void UButtonWidget::SetText(FText text, float size) {
 	if (Text) {
 		Text->SetText(text);
 		FSlateFontInfo FontInfo = Text->GetFont();
-		FontInfo.Size = 36;
+		FontInfo.Size = size;
 		Text->SetFont(FontInfo);
 	}
 }
